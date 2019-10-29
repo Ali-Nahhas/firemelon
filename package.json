@@ -10,12 +10,13 @@
     "description": "A simple way to sync between WatermelonDB and Firestore",
     "types": "lib/index.d.ts",
     "scripts": {
-        "test": "jest --coverage",
+        "test": "jest --coverage --watch",
         "build": "tsc",
         "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
         "lint": "tslint -p tsconfig.json",
         "version": "npm run format && git add -A src",
-        "postversion": "git push && git push --tags"
+        "postversion": "git push && git push --tags",
+        "run-emulator": "firebase emulators:start --only firestore"
     },
     "repository": {
         "type": "git",
@@ -33,17 +34,24 @@
     },
     "homepage": "https://github.com/AliAllaf/firemelon#readme",
     "devDependencies": {
+        "@babel/plugin-proposal-class-properties": "^7.5.5",
+        "@babel/plugin-proposal-decorators": "^7.6.0",
+        "@babel/plugin-transform-runtime": "^7.6.2",
+        "@firebase/testing": "^0.14.2",
         "@types/jest": "^24.0.20",
         "@types/lodash": "^4.14.144",
+        "firebase-tools": "^7.6.2",
         "jest": "^24.9.0",
+        "lodash.clonedeep": "^4.5.0",
         "prettier": "^1.18.2",
         "ts-jest": "^24.1.0",
         "tslint": "^5.20.0",
         "tslint-config-prettier": "^1.18.0",
-        "typescript": "^3.6.4"
+        "typescript": "^3.6.4",
+        "worker-loader": "^2.0.0"
     },
     "dependencies": {
         "@nozbe/watermelondb": "^0.14.1",
-        "lodash": "^4.17.15"
+        "lodash": "4.17.15"
     }
 }
