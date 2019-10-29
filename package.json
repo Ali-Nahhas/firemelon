@@ -1,0 +1,7 @@
+{
+  "name": "firemelon",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Ali Allaf <ali.allaf@hypatia.tech>",
+  "license": "MIT"
+}
