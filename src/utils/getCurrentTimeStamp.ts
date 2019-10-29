@@ -1,9 +1,9 @@
 import { SyncTimestamp } from '../types/interfaces';
 import { FirestoreModule } from '../types/firestore';
 
-export default async function getCurrentTimeStamp(db: FirestoreModule, timestamp: () => any) {
+export default async function getCurrentTimeStamp(db: FirestoreModule, getTimestamp: () => any) {
     const currentTimestampRef = await db.collection('syncTimeStamps').add({
-        syncTime: timestamp(),
+        syncTime: getTimestamp(),
     });
 
     const currentTimestampSN = await currentTimestampRef.get();

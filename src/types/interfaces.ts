@@ -5,8 +5,8 @@ export interface Item {
 }
 
 export interface SyncCollectionOptions {
-    excludedFields: string[];
-    customQuery: CollectionRef;
+    excludedFields?: string[];
+    customQuery?: CollectionRef;
 }
 
 export interface SyncObj {

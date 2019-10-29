@@ -12,12 +12,12 @@ import { FirestoreModule } from './types/firestore';
     },
 } */
 
-export default async function sync(database: Database, syncObj: SyncObj, db: FirestoreModule, timestamp: () => any) {
+export default async function sync(database: Database, syncObj: SyncObj, db: FirestoreModule, getTimestamp: () => any) {
     await synchronize({
         database,
 
         pullChanges: async ({ lastPulledAt }) => {
-            const syncTimestamp = await getCurrentTimeStamp(db, timestamp);
+            const syncTimestamp = await getCurrentTimeStamp(db, getTimestamp);
             let changes = {};
 
             const collections = keys(syncObj);
@@ -46,13 +46,13 @@ export default async function sync(database: Database, syncObj: SyncObj, db: Fir
 
                     const created = createdSN.docs.map(createdDoc => {
                         const data = createdDoc.data();
-                        const createdItem = omit(data, collectionOptions.excludedFields);
+                        const createdItem = omit(data, collectionOptions.excludedFields || []);
                         return createdItem;
                     });
 
                     const updated = updatedSN.docs.map(updatedDoc => {
                         const data = updatedDoc.data();
-                        const updatedItem = omit(data, collectionOptions.excludedFields);
+                        const updatedItem = omit(data, collectionOptions.excludedFields || []);
                         return updatedItem;
                     });
 
@@ -81,27 +81,27 @@ export default async function sync(database: Database, syncObj: SyncObj, db: Fir
                     map(arrayOfChanged, async doc => {
                         const itemValue = isDelete ? null : (doc.valueOf() as Item);
                         const docRef = isDelete ? collectionRef.doc(doc.toString()) : collectionRef.doc(itemValue!.id);
-                        const data = isDelete ? null : omit(itemValue, collectionOptions.excludedFields);
+                        const data = isDelete ? null : omit(itemValue, collectionOptions.excludedFields || []);
 
                         switch (changeName) {
                             case 'created':
                                 await docRef.set({
                                     ...data,
-                                    createdAt: timestamp(),
+                                    createdAt: getTimestamp(),
                                 });
                                 break;
 
                             case 'updated':
                                 docRef.update({
                                     ...data,
-                                    updatedAt: timestamp(),
+                                    updatedAt: getTimestamp(),
                                 });
                                 break;
 
                             case 'deleted':
                                 docRef.update({
                                     isDeleted: true,
-                                    deletedAt: timestamp(),
+                                    deletedAt: getTimestamp(),
                                 });
                                 break;
                         }
