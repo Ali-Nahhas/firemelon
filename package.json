@@ -1,7 +1,41 @@
 {
-  "name": "firemelon",
-  "version": "1.0.0",
-  "main": "index.js",
-  "author": "Ali Allaf <ali.allaf@hypatia.tech>",
-  "license": "MIT"
+    "name": "firemelon",
+    "version": "1.0.0",
+    "main": "lib/index.js",
+    "author": "Ali Allaf <ali.allaf@hypatia.tech>",
+    "license": "MIT",
+    "description": "A simple way to sync between WatermelonDB and Firestore",
+    "types": "lib/index.d.ts",
+    "scripts": {
+        "test": "jest --coverage",
+        "build": "tsc",
+        "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+        "lint": "tslint -p tsconfig.json",
+        "version": "npm run format && git add -A src",
+        "postversion": "git push && git push --tags"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/AliAllaf/firemelon.git"
+    },
+    "keywords": [
+        "Firestore",
+        "WatermelonDB",
+        "Firebase",
+        "Sync",
+        "Synchronization"
+    ],
+    "bugs": {
+        "url": "https://github.com/AliAllaf/firemelon/issues"
+    },
+    "homepage": "https://github.com/AliAllaf/firemelon#readme",
+    "devDependencies": {
+        "@types/jest": "^24.0.20",
+        "jest": "^24.9.0",
+        "prettier": "^1.18.2",
+        "ts-jest": "^24.1.0",
+        "tslint": "^5.20.0",
+        "tslint-config-prettier": "^1.18.0",
+        "typescript": "^3.6.4"
+    }
 }

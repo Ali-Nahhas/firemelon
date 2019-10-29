@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "declaration": true,
+        "declarationDir": "./lib",
+        "noImplicitAny": true,
+        "lib": ["es2017", "es6", "es7"],
+        "moduleResolution": "node",
+        "outDir": "./lib",
+        "strict": true
+    },
+    "typedocOptions": {
+        "mode": "modules",
+        "out": "docs"
+    },
+    "include": ["src"],
+    "exclude": ["node_modules", "**/__tests__/*"]
+}
