@@ -12,6 +12,8 @@ import { FirestoreModule } from './types/firestore';
     },
 } */
 
+const defaultExcluded = ['_status', '_changed'];
+
 export default async function syncFireMelon(
     database: Database,
     syncObj: SyncObj,
@@ -37,12 +39,10 @@ export default async function syncFireMelon(
                             .where('createdAt', '>=', lastPulledAt || 0)
                             .where('createdAt', '<=', syncTimestamp)
                             .get(),
-
                         query
                             .where('deletedAt', '>=', lastPulledAt || 0)
                             .where('deletedAt', '<=', syncTimestamp)
                             .get(),
-
                         query
                             .where('updatedAt', '>=', lastPulledAt || 0)
                             .where('updatedAt', '<=', syncTimestamp)
@@ -51,13 +51,19 @@ export default async function syncFireMelon(
 
                     const created = createdSN.docs.map(createdDoc => {
                         const data = createdDoc.data();
-                        const createdItem = omit(data, collectionOptions.excludedFields || []);
+
+                        const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
+                        const createdItem = omit(data, ommited);
+
                         return createdItem;
                     });
 
                     const updated = updatedSN.docs.map(updatedDoc => {
                         const data = updatedDoc.data();
-                        const updatedItem = omit(data, collectionOptions.excludedFields || []);
+
+                        const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
+                        const updatedItem = omit(data, ommited);
+
                         return updatedItem;
                     });
 
@@ -86,7 +92,9 @@ export default async function syncFireMelon(
                     map(arrayOfChanged, async doc => {
                         const itemValue = isDelete ? null : (doc.valueOf() as Item);
                         const docRef = isDelete ? collectionRef.doc(doc.toString()) : collectionRef.doc(itemValue!.id);
-                        const data = isDelete ? null : omit(itemValue, collectionOptions.excludedFields || []);
+
+                        const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
+                        const data = isDelete ? null : omit(itemValue, ommited);
 
                         switch (changeName) {
                             case 'created':

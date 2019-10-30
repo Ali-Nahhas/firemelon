@@ -11,6 +11,10 @@ export const schema = appSchema({
             name: 'todos',
             columns: [{ name: 'text', type: 'string', isIndexed: true }],
         }),
+        tableSchema({
+            name: 'users',
+            columns: [{ name: 'name', type: 'string', isIndexed: true }],
+        }),
     ],
 });
 
@@ -18,6 +22,12 @@ export class Todo extends Model {
     static table = 'todos';
 
     @field('text')
+    text!: string;
+}
+export class User extends Model {
+    static table = 'users';
+
+    @field('name')
     text!: string;
 }
 
@@ -28,7 +38,7 @@ export default function newDatabase() {
     const database = new Database({
         adapter,
         // @ts-ignore
-        modelClasses: [Todo],
+        modelClasses: [Todo, User],
         actionsEnabled: true,
     });
 
