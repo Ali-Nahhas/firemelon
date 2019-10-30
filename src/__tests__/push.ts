@@ -2,9 +2,10 @@ import * as firebase from '@firebase/testing';
 import newDatabase from '../utils/schema';
 import syncFireMelon from '../firestoreSync';
 import { SyncObj } from '../types/interfaces';
-import { Q, Model } from '@nozbe/watermelondb';
+import { Model } from '@nozbe/watermelondb';
 
 const projectId = 'firemelon';
+const sessionId = 'asojfbaoufasoinfaso';
 
 function authedApp() {
     return firebase.initializeAdminApp({ projectId }).firestore();
@@ -41,7 +42,7 @@ describe('Push Changes function tests', () => {
             users: {},
         };
 
-        await syncFireMelon(db, obj, app1, () => new Date());
+        await syncFireMelon(db, obj, app1, sessionId, () => new Date());
 
         const melonTodos = await melonTodosRef.query().fetch();
         const melonUsers = await melonUsersRef.query().fetch();
@@ -83,7 +84,7 @@ describe('Push Changes function tests', () => {
             });
         });
 
-        await syncFireMelon(db, obj, app1, () => new Date());
+        await syncFireMelon(db, obj, app1, sessionId, () => new Date());
 
         await db.action(async () => {
             await updated.update((todo: any) => {
@@ -91,7 +92,7 @@ describe('Push Changes function tests', () => {
             });
         });
 
-        await syncFireMelon(db, obj, app1, () => new Date());
+        await syncFireMelon(db, obj, app1, sessionId, () => new Date());
 
         const todosSnapshot = await fireTodosRef.get();
 
@@ -127,13 +128,13 @@ describe('Push Changes function tests', () => {
             });
         });
 
-        await syncFireMelon(db, obj, app1, () => new Date());
+        await syncFireMelon(db, obj, app1, sessionId, () => new Date());
 
         await db.action(async () => {
             await deleted.markAsDeleted();
         });
 
-        await syncFireMelon(db, obj, app1, () => new Date());
+        await syncFireMelon(db, obj, app1, sessionId, () => new Date());
 
         const todosSnapshot = await fireTodosRef.get();
 

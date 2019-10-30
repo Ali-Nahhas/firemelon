@@ -1,7 +1,6 @@
 import { synchronize } from '@nozbe/watermelondb/sync';
 import { Item, SyncObj } from './types/interfaces';
 import { Database } from '@nozbe/watermelondb';
-import getCurrentTimeStamp from './utils/getCurrentTimeStamp';
 import { map, keys, omit } from 'lodash';
 import { FirestoreModule } from './types/firestore';
 
@@ -18,13 +17,15 @@ export default async function syncFireMelon(
     database: Database,
     syncObj: SyncObj,
     db: FirestoreModule,
-    getTimestamp: () => any,
+    sessionId: string,
+    getTimestamp: () => any = () => new Date(),
 ) {
     await synchronize({
         database,
 
         pullChanges: async ({ lastPulledAt }) => {
-            const syncTimestamp = await getCurrentTimeStamp(db, getTimestamp);
+            const syncTimestamp = new Date();
+            const lastPulledAtTime = new Date(lastPulledAt || 0);
             let changes = {};
 
             const collections = keys(syncObj);
@@ -36,40 +37,46 @@ export default async function syncFireMelon(
 
                     const [createdSN, deletedSN, updatedSN] = await Promise.all([
                         query
-                            .where('createdAt', '>=', lastPulledAt || 0)
+                            .where('createdAt', '>=', lastPulledAtTime)
                             .where('createdAt', '<=', syncTimestamp)
                             .get(),
                         query
-                            .where('deletedAt', '>=', lastPulledAt || 0)
+                            .where('deletedAt', '>=', lastPulledAtTime)
                             .where('deletedAt', '<=', syncTimestamp)
                             .get(),
                         query
-                            .where('updatedAt', '>=', lastPulledAt || 0)
+                            .where('updatedAt', '>=', lastPulledAtTime)
                             .where('updatedAt', '<=', syncTimestamp)
                             .get(),
                     ]);
 
-                    const created = createdSN.docs.map(createdDoc => {
-                        const data = createdDoc.data();
+                    const created = createdSN.docs
+                        .filter(t => t.data().sessionId !== sessionId)
+                        .map(createdDoc => {
+                            const data = createdDoc.data();
 
-                        const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
-                        const createdItem = omit(data, ommited);
+                            const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
+                            const createdItem = omit(data, ommited);
 
-                        return createdItem;
-                    });
+                            return createdItem;
+                        });
 
-                    const updated = updatedSN.docs.map(updatedDoc => {
-                        const data = updatedDoc.data();
+                    const updated = updatedSN.docs
+                        .filter(t => t.data().sessionId !== sessionId)
+                        .map(updatedDoc => {
+                            const data = updatedDoc.data();
 
-                        const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
-                        const updatedItem = omit(data, ommited);
+                            const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
+                            const updatedItem = omit(data, ommited);
 
-                        return updatedItem;
-                    });
+                            return updatedItem;
+                        });
 
-                    const deleted = deletedSN.docs.map(deletedDoc => {
-                        return deletedDoc.id;
-                    });
+                    const deleted = deletedSN.docs
+                        .filter(t => t.data().sessionId !== sessionId)
+                        .map(deletedDoc => {
+                            return deletedDoc.id;
+                        });
 
                     changes = {
                         ...changes,
@@ -78,7 +85,7 @@ export default async function syncFireMelon(
                 }),
             );
 
-            return { changes, timestamp: syncTimestamp };
+            return { changes, timestamp: +syncTimestamp };
         },
 
         pushChanges: async ({ changes }) => {
@@ -101,6 +108,7 @@ export default async function syncFireMelon(
                                 await docRef.set({
                                     ...data,
                                     createdAt: getTimestamp(),
+                                    sessionId,
                                 });
                                 break;
 
@@ -108,6 +116,7 @@ export default async function syncFireMelon(
                                 docRef.update({
                                     ...data,
                                     updatedAt: getTimestamp(),
+                                    sessionId,
                                 });
                                 break;
 
@@ -115,6 +124,7 @@ export default async function syncFireMelon(
                                 docRef.update({
                                     isDeleted: true,
                                     deletedAt: getTimestamp(),
+                                    sessionId,
                                 });
                                 break;
                         }
