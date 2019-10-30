@@ -1,5 +1,7 @@
 import * as firebase from '@firebase/testing';
 import newDatabase from '../utils/schema';
+import syncFireMelon from '../firestoreSync';
+import { SyncObj } from '../types/interfaces';
 
 const projectId = 'firemelon';
 
@@ -19,23 +21,24 @@ describe('tests', () => {
         const app1 = authedApp();
 
         const db = newDatabase();
-        const todosRef = db.collections.get('todos');
-        const ref = app1.collection('todos');
+        const melonTodoRef = db.collections.get('todos');
+        const fireTodoRef = app1.collection('todos');
 
         await db.action(async () => {
-            await todosRef.create((todo: any) => {
-                todo.text = 'New todooooooooo';
+            await melonTodoRef.create((todo: any) => {
+                todo.text = 'todooooooooo';
             });
         });
 
-        const allTodos = await todosRef.query().fetch();
+        const obj: SyncObj = {
+            todos: {},
+        };
 
-        await ref.add(allTodos[0]._raw);
+        await syncFireMelon(db, obj, app1, () => new Date());
 
-        const added = await ref.get();
+        const allTodos = await melonTodoRef.query().fetch();
+        await fireTodoRef.add(allTodos[0]._raw);
 
-        console.log(added.docs[0].data());
-
-        // expect(db).toBe('');
+        expect(1).toBe(1);
     });
 });

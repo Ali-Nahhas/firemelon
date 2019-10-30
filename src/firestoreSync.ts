@@ -12,7 +12,12 @@ import { FirestoreModule } from './types/firestore';
     },
 } */
 
-export default async function sync(database: Database, syncObj: SyncObj, db: FirestoreModule, getTimestamp: () => any) {
+export default async function syncFireMelon(
+    database: Database,
+    syncObj: SyncObj,
+    db: FirestoreModule,
+    getTimestamp: () => any,
+) {
     await synchronize({
         database,
 

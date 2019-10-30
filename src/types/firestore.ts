@@ -12,21 +12,23 @@ export interface QuerySnapshot {
     docs: DocumentSnapshot[];
 }
 
-export interface Query {
+export interface DocumentRef {
+    get: () => Promise<DocumentSnapshot>;
     set: (data: { [key: string]: any }) => Promise<void>;
     update: (data: { [key: string]: any }) => Promise<void>;
-    add: (data: { [key: string]: any }) => Promise<DocumentRef>;
 }
 
-export interface DocumentRef extends Query {
-    get: () => Promise<DocumentSnapshot>;
+export interface Query {
+    where: (field: string, operator: WhereFilterOp, value: any) => Query;
+    get: () => Promise<QuerySnapshot>;
 }
 
 export interface CollectionRef extends Query {
+    add: (data: { [key: string]: any }) => Promise<DocumentRef>;
     doc: (documentName: string) => DocumentRef;
-    get: () => Promise<QuerySnapshot>;
-    where: (field: string, operator: string, value: any) => CollectionRef;
 }
+
+export type WhereFilterOp = '<' | '<=' | '==' | '>=' | '>' | 'array-contains';
 
 export interface FirestoreModule {
     collection: (collectionPath: string) => CollectionRef;
