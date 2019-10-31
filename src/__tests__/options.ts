@@ -1,5 +1,5 @@
 import * as firebase from '@firebase/testing';
-import { syncFireMelon } from '../firestoreSync';
+import { syncFireMelon } from '../index';
 import { SyncObj } from '../types/interfaces';
 import newDatabase from '../utils/schema';
 import timeout from '../utils/timeout';
@@ -12,7 +12,7 @@ function authedApp(auth: any) {
 }
 
 describe('Options Excluded Fields', () => {
-    beforeEach(async () => {
+    afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map(app => app.delete()));
     });
@@ -37,7 +37,7 @@ describe('Options Excluded Fields', () => {
             });
         });
 
-        await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
+        await syncFireMelon(firstDatabase, obj, app1, sessionId);
 
         const todosSnapshot = await fireTodosRef.get();
 
@@ -48,7 +48,7 @@ describe('Options Excluded Fields', () => {
 });
 
 describe('Options Custom Query', () => {
-    beforeEach(async () => {
+    afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map(app => app.delete()));
     });

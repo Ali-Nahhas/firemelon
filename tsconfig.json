@@ -10,7 +10,8 @@
         "moduleResolution": "node",
         "outDir": "./lib",
         "strict": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "allowSyntheticDefaultImports": true
     },
     "typedocOptions": {
         "mode": "modules",

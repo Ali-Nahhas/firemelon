@@ -13,7 +13,7 @@ function authedApp(auth: any) {
 }
 
 describe('Push Created', () => {
-    beforeEach(async () => {
+    afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map(app => app.delete()));
     });
@@ -64,7 +64,7 @@ describe('Push Created', () => {
 });
 
 describe('Push Updated', () => {
-    beforeEach(async () => {
+    afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map(app => app.delete()));
     });
@@ -117,7 +117,7 @@ describe('Push Updated', () => {
 });
 
 describe('Push Deleted', () => {
-    beforeEach(async () => {
+    afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map(app => app.delete()));
     });
