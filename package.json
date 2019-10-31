@@ -10,7 +10,7 @@
     "description": "A simple way to sync between WatermelonDB and Firestore",
     "types": "lib/index.d.ts",
     "scripts": {
-        "test": "concurrently \"npm run run-emulator\" \"wait-on tcp:8080 && (npm run exec-test && fuser -k 8080/tcp) || fuser -k 8080/tcp\"",
+        "test": "concurrently \"npm run run-emulator\" \"wait-on tcp:8080 && npm run exec-test && fuser -k 8080/tcp\"",
         "exec-test": "jest --coverage --runInBand --forceExit",
         "test:watch": "jest --coverage --watch --runInBand",
         "build": "tsc",
