@@ -1,24 +1,22 @@
-import { appSchema, tableSchema } from '@nozbe/watermelondb';
+import { appSchema, Database, Model, tableSchema } from '@nozbe/watermelondb';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
-import { Database } from '@nozbe/watermelondb';
-import { Model } from '@nozbe/watermelondb';
 import { field } from '@nozbe/watermelondb/decorators';
 
 export const schema = appSchema({
-    version: 1,
     tables: [
         tableSchema({
-            name: 'todos',
             columns: [
                 { name: 'text', type: 'string', isIndexed: true },
                 { name: 'color', type: 'string', isIndexed: true },
             ],
+            name: 'todos',
         }),
         tableSchema({
-            name: 'users',
             columns: [{ name: 'name', type: 'string', isIndexed: true }],
+            name: 'users',
         }),
     ],
+    version: 1,
 });
 
 export class Todo extends Model {
@@ -42,10 +40,10 @@ export default function newDatabase() {
         schema,
     });
     const database = new Database({
+        actionsEnabled: true,
         adapter,
         // @ts-ignore
         modelClasses: [Todo, User],
-        actionsEnabled: true,
     });
 
     return database;

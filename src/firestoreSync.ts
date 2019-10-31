@@ -1,8 +1,8 @@
-import { synchronize } from '@nozbe/watermelondb/sync';
-import { Item, SyncObj } from './types/interfaces';
 import { Database } from '@nozbe/watermelondb';
-import { map, keys, omit } from 'lodash';
+import { synchronize } from '@nozbe/watermelondb/sync';
+import { keys, map, omit } from 'lodash';
 import { FirestoreModule } from './types/firestore';
+import { Item, SyncObj } from './types/interfaces';
 
 /* const ex: SyncObj = {
     todos: {
@@ -80,7 +80,7 @@ export async function syncFireMelon(
 
                     changes = {
                         ...changes,
-                        [collectionName]: { created: created, deleted: deleted, updated: updated },
+                        [collectionName]: { created, deleted, updated },
                     };
                 }),
             );
@@ -115,15 +115,15 @@ export async function syncFireMelon(
                             case 'updated':
                                 docRef.update({
                                     ...data,
-                                    updatedAt: getTimestamp(),
                                     sessionId,
+                                    updatedAt: getTimestamp(),
                                 });
                                 break;
 
                             case 'deleted':
                                 docRef.update({
-                                    isDeleted: true,
                                     deletedAt: getTimestamp(),
+                                    isDeleted: true,
                                     sessionId,
                                 });
                                 break;
