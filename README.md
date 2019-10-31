@@ -1,4 +1,7 @@
-# Firemelon v0.0.5
+# Firemelon
+
+[![NPM version](https://img.shields.io/npm/v/firemelon)](https://www.npmjs.com/package/firemelon?activeTab=versions)
+
 
 A simple way to sync between WatermelonDB and Firestore.
 
