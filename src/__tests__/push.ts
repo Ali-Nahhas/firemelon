@@ -1,6 +1,6 @@
 import * as firebase from '@firebase/testing';
 import newDatabase from '../utils/schema';
-import syncFireMelon from '../firestoreSync';
+import { syncFireMelon } from '../firestoreSync';
 import { SyncObj } from '../types/interfaces';
 import { Model } from '@nozbe/watermelondb';
 import timeout from '../utils/timeout';

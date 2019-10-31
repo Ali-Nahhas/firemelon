@@ -1,0 +1,1 @@
+export { syncFireMelon } from './firestoreSync';

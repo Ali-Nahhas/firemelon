@@ -9,7 +9,8 @@
         "lib": ["es2017", "es6", "es7"],
         "moduleResolution": "node",
         "outDir": "./lib",
-        "strict": true
+        "strict": true,
+        "skipLibCheck": true
     },
     "typedocOptions": {
         "mode": "modules",

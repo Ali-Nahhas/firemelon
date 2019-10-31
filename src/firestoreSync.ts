@@ -13,7 +13,7 @@ import { FirestoreModule } from './types/firestore';
 
 const defaultExcluded = ['_status', '_changed'];
 
-export default async function syncFireMelon(
+export async function syncFireMelon(
     database: Database,
     syncObj: SyncObj,
     db: FirestoreModule,
