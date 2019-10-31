@@ -9,7 +9,10 @@ export const schema = appSchema({
     tables: [
         tableSchema({
             name: 'todos',
-            columns: [{ name: 'text', type: 'string', isIndexed: true }],
+            columns: [
+                { name: 'text', type: 'string', isIndexed: true },
+                { name: 'color', type: 'string', isIndexed: true },
+            ],
         }),
         tableSchema({
             name: 'users',
@@ -23,6 +26,9 @@ export class Todo extends Model {
 
     @field('text')
     text!: string;
+
+    @field('color')
+    color!: string;
 }
 export class User extends Model {
     static table = 'users';
