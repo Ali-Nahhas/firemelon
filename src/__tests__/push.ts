@@ -71,7 +71,7 @@ describe('Push Created', () => {
         expect(firstFireTodo.text).toBe(firstMelonTodo.text);
         expect(firstFireUser.name).toBe(firstMelonUser.name);
 
-        await timeout(1500);
+        await timeout(1000);
     });
 });
 
@@ -118,7 +118,7 @@ describe('Push Updated', () => {
 
         await syncFireMelon(db, obj, app1, sessionId, () => new Date());
 
-        await timeout(1500);
+        await timeout(1000);
 
         await db.action(async () => {
             await updated.update((todo: any) => {
@@ -183,7 +183,7 @@ describe('Push Deleted', () => {
 
         await syncFireMelon(db, obj, app1, sessionId, () => new Date());
 
-        await timeout(1500);
+        await timeout(1000);
 
         await db.action(async () => {
             await deleted.markAsDeleted();

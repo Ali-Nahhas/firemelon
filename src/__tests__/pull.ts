@@ -52,7 +52,7 @@ describe('Pull Created', () => {
 
         const secondMelonTodoCollectionBefore = await secondMelonTodosRef.query().fetch();
 
-        await timeout(1500);
+        await timeout(1000);
 
         expect(secondMelonTodoCollectionBefore.length).toBe(0);
 
@@ -103,7 +103,7 @@ describe('Pull Updated', () => {
 
         await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
 
-        await timeout(1500);
+        await timeout(1000);
 
         await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
 
@@ -115,7 +115,7 @@ describe('Pull Updated', () => {
         });
         await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
 
-        await timeout(1500);
+        await timeout(1000);
 
         await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
 
@@ -124,5 +124,65 @@ describe('Pull Updated', () => {
         expect(secondMelonTodoCollection.length).toBe(1);
 
         expect(secondMelonTodoCollection[0]._raw.text).toBe('updated todo');
+    });
+});
+
+describe('Pull Deleted', () => {
+    beforeEach(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    afterEach(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    beforeAll(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    afterAll(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+
+    it('should pull marked-as-deleted documents from Firestore to WatermelonDB and mark them as deleted', async () => {
+        const app1 = authedApp({ uid: 'owner' });
+
+        const firstDatabase = newDatabase();
+        const secondDatabase = newDatabase();
+
+        const firstMelonTodosRef = firstDatabase.collections.get('todos');
+        const secondMelonTodosRef = secondDatabase.collections.get('todos');
+
+        const obj: SyncObj = {
+            todos: {},
+        };
+
+        await firstDatabase.action(async () => {
+            await firstMelonTodosRef.create((todo: any) => {
+                todo.text = 'todo 1';
+            });
+        });
+
+        await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
+
+        await timeout(1000);
+
+        await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
+
+        const firstMelonTodoCollection = await firstMelonTodosRef.query().fetch();
+        await firstDatabase.action(async () => {
+            await firstMelonTodoCollection[0].markAsDeleted();
+        });
+
+        await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
+
+        await timeout(1000);
+
+        await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
+
+        const secondMelonTodoCollection = await secondMelonTodosRef.query().fetch();
+
+        expect(secondMelonTodoCollection.length).toBe(0);
     });
 });
