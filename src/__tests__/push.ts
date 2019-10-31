@@ -17,18 +17,6 @@ describe('Push Created', () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map(app => app.delete()));
     });
-    afterEach(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
-    });
-    beforeAll(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
-    });
-    afterAll(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
-    });
 
     it('should push documents to firestore when adding new objects in watermelonDB', async () => {
         const app1 = authedApp({ uid: 'owner' });
@@ -77,18 +65,6 @@ describe('Push Created', () => {
 
 describe('Push Updated', () => {
     beforeEach(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
-    });
-    afterEach(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
-    });
-    beforeAll(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
-    });
-    afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map(app => app.delete()));
     });
@@ -142,18 +118,6 @@ describe('Push Updated', () => {
 
 describe('Push Deleted', () => {
     beforeEach(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
-    });
-    afterEach(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
-    });
-    beforeAll(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
-    });
-    afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map(app => app.delete()));
     });
