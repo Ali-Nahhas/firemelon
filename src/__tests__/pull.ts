@@ -40,7 +40,7 @@ describe('Pull Created', () => {
 
         const secondMelonTodoCollectionBefore = await secondMelonTodosRef.query().fetch();
 
-        await timeout(1000);
+        await timeout(500);
 
         expect(secondMelonTodoCollectionBefore.length).toBe(0);
 
@@ -79,7 +79,7 @@ describe('Pull Updated', () => {
 
         await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
 
-        await timeout(1000);
+        await timeout(500);
 
         await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
 
@@ -91,7 +91,7 @@ describe('Pull Updated', () => {
         });
         await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
 
-        await timeout(1000);
+        await timeout(500);
 
         await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
 
@@ -130,7 +130,7 @@ describe('Pull Deleted', () => {
 
         await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
 
-        await timeout(1000);
+        await timeout(500);
 
         await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
 
@@ -141,7 +141,7 @@ describe('Pull Deleted', () => {
 
         await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
 
-        await timeout(1000);
+        await timeout(500);
 
         await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
 

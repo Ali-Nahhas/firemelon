@@ -7,7 +7,7 @@ import { FirestoreModule } from './types/firestore';
 /* const ex: SyncObj = {
     todos: {
         excludedFields: [],
-        customQuery: db.collection('todos').where('color', '==', 'red'),
+        customQuery: firestore.collection('todos').where('color', '==', 'red'),
     },
 } */
 
