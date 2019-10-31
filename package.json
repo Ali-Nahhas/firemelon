@@ -14,7 +14,7 @@
         "build": "tsc",
         "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
         "lint": "tslint -p tsconfig.json",
-        "version": "npm run format && git add -A src",
+        "version": "git add -A src",
         "postversion": "git push && git push --tags",
         "run-emulator": "firebase emulators:start --only firestore"
     },
