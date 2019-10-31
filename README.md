@@ -2,7 +2,6 @@
 
 [![NPM version](https://img.shields.io/npm/v/firemelon)](https://www.npmjs.com/package/firemelon?activeTab=versions)
 
-
 A simple way to sync between WatermelonDB and Firestore.
 
 ## Installation
@@ -28,7 +27,9 @@ Firemelon works with both [@firebase/firestore](https://www.npmjs.com/package/@f
 ```typescript
 import { syncFireMelon } from 'firemelon';
 
-syncFireMelon(database, syncObject, firestore, sessionId, timefn());
+async () => {
+    await syncFireMelon(database, syncObject, firestore, sessionId, timefn());
+};
 ```
 
 -   **database** :
