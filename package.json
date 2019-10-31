@@ -10,7 +10,7 @@
     "description": "A simple way to sync between WatermelonDB and Firestore",
     "types": "lib/index.d.ts",
     "scripts": {
-        "test": "jest --coverage --watch",
+        "test": "jest --coverage --watch --runInBand",
         "build": "tsc",
         "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
         "lint": "tslint -p tsconfig.json",

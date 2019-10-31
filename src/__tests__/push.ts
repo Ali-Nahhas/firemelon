@@ -3,24 +3,35 @@ import newDatabase from '../utils/schema';
 import syncFireMelon from '../firestoreSync';
 import { SyncObj } from '../types/interfaces';
 import { Model } from '@nozbe/watermelondb';
+import timeout from '../utils/timeout';
 
 const projectId = 'firemelon';
 const sessionId = 'asojfbaoufasoinfaso';
 
-function authedApp() {
-    return firebase.initializeAdminApp({ projectId }).firestore();
+function authedApp(auth: any) {
+    return firebase.initializeTestApp({ projectId, auth }).firestore();
 }
 
-describe('Push Changes function tests', () => {
+describe('Push Created', () => {
     beforeEach(async () => {
         await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    afterEach(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    beforeAll(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
     });
     afterAll(async () => {
+        await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map(app => app.delete()));
     });
 
     it('should push documents to firestore when adding new objects in watermelonDB', async () => {
-        const app1 = authedApp();
+        const app1 = authedApp({ uid: 'owner' });
 
         const db = newDatabase();
         const melonTodosRef = db.collections.get('todos');
@@ -59,10 +70,31 @@ describe('Push Changes function tests', () => {
 
         expect(firstFireTodo.text).toBe(firstMelonTodo.text);
         expect(firstFireUser.name).toBe(firstMelonUser.name);
+
+        await timeout(1500);
+    });
+});
+
+describe('Push Updated', () => {
+    beforeEach(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    afterEach(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    beforeAll(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    afterAll(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
     });
 
     it('should update documents in firestore when updating objects in watermelonDB', async () => {
-        const app1 = authedApp();
+        const app1 = authedApp({ uid: 'owner' });
 
         const db = newDatabase();
         const melonTodosRef = db.collections.get('todos');
@@ -86,6 +118,8 @@ describe('Push Changes function tests', () => {
 
         await syncFireMelon(db, obj, app1, sessionId, () => new Date());
 
+        await timeout(1500);
+
         await db.action(async () => {
             await updated.update((todo: any) => {
                 todo.text = 'updated todo';
@@ -104,9 +138,28 @@ describe('Push Changes function tests', () => {
 
         expect(todosSnapshot.docs.length).toBe(2);
     });
+});
+
+describe('Push Deleted', () => {
+    beforeEach(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    afterEach(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    beforeAll(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
+    afterAll(async () => {
+        await firebase.clearFirestoreData({ projectId });
+        await Promise.all(firebase.apps().map(app => app.delete()));
+    });
 
     it('should mark documents in firestore as Deleted when marking objects as deleted in watermelonDB', async () => {
-        const app1 = authedApp();
+        const app1 = authedApp({ uid: 'owner' });
 
         const db = newDatabase();
         const melonTodosRef = db.collections.get('todos');
@@ -129,6 +182,8 @@ describe('Push Changes function tests', () => {
         });
 
         await syncFireMelon(db, obj, app1, sessionId, () => new Date());
+
+        await timeout(1500);
 
         await db.action(async () => {
             await deleted.markAsDeleted();
