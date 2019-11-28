@@ -62,7 +62,7 @@ export async function syncFireMelon(
                         });
 
                     const updated = updatedSN.docs
-                        .filter(t => t.data().sessionId !== sessionId)
+                        .filter(t => t.data().sessionId !== sessionId && !createdSN.docs.find(doc => doc.id === t.id))
                         .map(updatedDoc => {
                             const data = updatedDoc.data();
 
