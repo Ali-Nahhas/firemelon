@@ -22,17 +22,17 @@ export const schema = appSchema({
 export class Todo extends Model {
     static table = 'todos';
 
-    @field('text')
+    @(field as any)('text')
     text!: string;
 
-    @field('color')
+    @(field as any)('color')
     color!: string;
 }
 export class User extends Model {
     static table = 'users';
 
-    @field('name')
-    text!: string;
+    @(field as any)('name')
+    name!: string;
 }
 
 export default function newDatabase() {

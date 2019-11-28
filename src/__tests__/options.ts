@@ -1,7 +1,7 @@
 import * as firebase from '@firebase/testing';
 import { syncFireMelon } from '../index';
 import { SyncObj } from '../types/interfaces';
-import newDatabase from '../utils/schema';
+import newDatabase, { Todo } from '../utils/schema';
 import timeout from '../utils/timeout';
 
 const projectId = 'firemelon';
@@ -59,8 +59,8 @@ describe('Options Custom Query', () => {
         const firstDatabase = newDatabase();
         const secondDatabase = newDatabase();
 
-        const firstMelonTodosRef = firstDatabase.collections.get('todos');
-        const secondMelonTodosRef = secondDatabase.collections.get('todos');
+        const firstMelonTodosRef = firstDatabase.collections.get<Todo>('todos');
+        const secondMelonTodosRef = secondDatabase.collections.get<Todo>('todos');
 
         const fireTodosRef = app1.collection('todos').where('color', '==', 'red');
 
@@ -90,7 +90,7 @@ describe('Options Custom Query', () => {
         const secondMelonTodoCollection = await secondMelonTodosRef.query().fetch();
 
         expect(secondMelonTodoCollection.length).toBe(1);
-        expect(secondMelonTodoCollection[0]._raw.color).toBe('red');
-        expect(secondMelonTodoCollection[0]._raw.text).toBe('todo 1');
+        expect(secondMelonTodoCollection[0].color).toBe('red');
+        expect(secondMelonTodoCollection[0].text).toBe('todo 1');
     });
 });

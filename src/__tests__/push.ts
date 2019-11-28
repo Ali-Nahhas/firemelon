@@ -2,7 +2,7 @@ import * as firebase from '@firebase/testing';
 import { Model } from '@nozbe/watermelondb';
 import { syncFireMelon } from '../firestoreSync';
 import { SyncObj } from '../types/interfaces';
-import newDatabase from '../utils/schema';
+import newDatabase, { Todo, User } from '../utils/schema';
 import timeout from '../utils/timeout';
 
 const projectId = 'firemelon';
@@ -22,9 +22,9 @@ describe('Push Created', () => {
         const app1 = authedApp({ uid: 'owner' });
 
         const db = newDatabase();
-        const melonTodosRef = db.collections.get('todos');
+        const melonTodosRef = db.collections.get<Todo>('todos');
         const fireTodosRef = app1.collection('todos');
-        const melonUsersRef = db.collections.get('users');
+        const melonUsersRef = db.collections.get<User>('users');
         const fireUsersRef = app1.collection('users');
 
         await db.action(async () => {
@@ -45,8 +45,8 @@ describe('Push Created', () => {
 
         const melonTodos = await melonTodosRef.query().fetch();
         const melonUsers = await melonUsersRef.query().fetch();
-        const firstMelonTodo = melonTodos[0]._raw;
-        const firstMelonUser = melonUsers[0]._raw;
+        const firstMelonTodo = melonTodos[0];
+        const firstMelonUser = melonUsers[0];
 
         const todosSnapshot = await fireTodosRef.get();
         const usersSnapshot = await fireUsersRef.get();
@@ -73,7 +73,7 @@ describe('Push Updated', () => {
         const app1 = authedApp({ uid: 'owner' });
 
         const db = newDatabase();
-        const melonTodosRef = db.collections.get('todos');
+        const melonTodosRef = db.collections.get<Todo>('todos');
         const fireTodosRef = app1.collection('todos');
 
         const obj: SyncObj = {
@@ -126,7 +126,7 @@ describe('Push Deleted', () => {
         const app1 = authedApp({ uid: 'owner' });
 
         const db = newDatabase();
-        const melonTodosRef = db.collections.get('todos');
+        const melonTodosRef = db.collections.get<Todo>('todos');
         const fireTodosRef = app1.collection('todos');
 
         const obj: SyncObj = {

@@ -1,7 +1,7 @@
 import * as firebase from '@firebase/testing';
 import { syncFireMelon } from '../firestoreSync';
 import { SyncObj } from '../types/interfaces';
-import newDatabase from '../utils/schema';
+import newDatabase, { Todo } from '../utils/schema';
 import timeout from '../utils/timeout';
 
 const projectId = 'firemelon';
@@ -23,8 +23,8 @@ describe('Pull Created', () => {
         const firstDatabase = newDatabase();
         const secondDatabase = newDatabase();
 
-        const firstMelonTodosRef = firstDatabase.collections.get('todos');
-        const secondMelonTodosRef = secondDatabase.collections.get('todos');
+        const firstMelonTodosRef = firstDatabase.collections.get<Todo>('todos');
+        const secondMelonTodosRef = secondDatabase.collections.get<Todo>('todos');
 
         const obj: SyncObj = {
             todos: {},
@@ -48,7 +48,7 @@ describe('Pull Created', () => {
 
         const secondMelonTodoCollection = await secondMelonTodosRef.query().fetch();
 
-        expect(secondMelonTodoCollection[0]._raw.text).toBe('todo 1');
+        expect(secondMelonTodoCollection[0].text).toBe('todo 1');
     });
 });
 
@@ -64,8 +64,8 @@ describe('Pull Updated', () => {
         const firstDatabase = newDatabase();
         const secondDatabase = newDatabase();
 
-        const firstMelonTodosRef = firstDatabase.collections.get('todos');
-        const secondMelonTodosRef = secondDatabase.collections.get('todos');
+        const firstMelonTodosRef = firstDatabase.collections.get<Todo>('todos');
+        const secondMelonTodosRef = secondDatabase.collections.get<Todo>('todos');
 
         const obj: SyncObj = {
             todos: {},
@@ -99,7 +99,7 @@ describe('Pull Updated', () => {
 
         expect(secondMelonTodoCollection.length).toBe(1);
 
-        expect(secondMelonTodoCollection[0]._raw.text).toBe('updated todo');
+        expect(secondMelonTodoCollection[0].text).toBe('updated todo');
     });
 });
 
@@ -115,8 +115,8 @@ describe('Pull Deleted', () => {
         const firstDatabase = newDatabase();
         const secondDatabase = newDatabase();
 
-        const firstMelonTodosRef = firstDatabase.collections.get('todos');
-        const secondMelonTodosRef = secondDatabase.collections.get('todos');
+        const firstMelonTodosRef = firstDatabase.collections.get<Todo>('todos');
+        const secondMelonTodosRef = secondDatabase.collections.get<Todo>('todos');
 
         const obj: SyncObj = {
             todos: {},
