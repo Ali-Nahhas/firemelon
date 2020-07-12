@@ -31,28 +31,19 @@ export async function syncFireMelon(
             const collections = keys(syncObj);
 
             await Promise.all(
-                map(collections, async collectionName => {
+                map(collections, async (collectionName) => {
                     const collectionOptions = syncObj[collectionName];
                     const query = collectionOptions.customQuery || db.collection(collectionName);
 
                     const [createdSN, deletedSN, updatedSN] = await Promise.all([
-                        query
-                            .where('createdAt', '>=', lastPulledAtTime)
-                            .where('createdAt', '<=', syncTimestamp)
-                            .get(),
-                        query
-                            .where('deletedAt', '>=', lastPulledAtTime)
-                            .where('deletedAt', '<=', syncTimestamp)
-                            .get(),
-                        query
-                            .where('updatedAt', '>=', lastPulledAtTime)
-                            .where('updatedAt', '<=', syncTimestamp)
-                            .get(),
+                        query.where('createdAt', '>=', lastPulledAtTime).where('createdAt', '<=', syncTimestamp).get(),
+                        query.where('deletedAt', '>=', lastPulledAtTime).where('deletedAt', '<=', syncTimestamp).get(),
+                        query.where('updatedAt', '>=', lastPulledAtTime).where('updatedAt', '<=', syncTimestamp).get(),
                     ]);
 
                     const created = createdSN.docs
-                        .filter(t => t.data().sessionId !== sessionId)
-                        .map(createdDoc => {
+                        .filter((t) => t.data().sessionId !== sessionId)
+                        .map((createdDoc) => {
                             const data = createdDoc.data();
 
                             const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
@@ -62,8 +53,10 @@ export async function syncFireMelon(
                         });
 
                     const updated = updatedSN.docs
-                        .filter(t => t.data().sessionId !== sessionId && !createdSN.docs.find(doc => doc.id === t.id))
-                        .map(updatedDoc => {
+                        .filter(
+                            (t) => t.data().sessionId !== sessionId && !createdSN.docs.find((doc) => doc.id === t.id),
+                        )
+                        .map((updatedDoc) => {
                             const data = updatedDoc.data();
 
                             const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
@@ -73,8 +66,8 @@ export async function syncFireMelon(
                         });
 
                     const deleted = deletedSN.docs
-                        .filter(t => t.data().sessionId !== sessionId)
-                        .map(deletedDoc => {
+                        .filter((t) => t.data().sessionId !== sessionId)
+                        .map((deletedDoc) => {
                             return deletedDoc.id;
                         });
 
@@ -96,7 +89,7 @@ export async function syncFireMelon(
                 map(row, (arrayOfChanged, changeName) => {
                     const isDelete = changeName === 'deleted';
 
-                    map(arrayOfChanged, async doc => {
+                    map(arrayOfChanged, async (doc) => {
                         const itemValue = isDelete ? null : (doc.valueOf() as Item);
                         const docRef = isDelete ? collectionRef.doc(doc.toString()) : collectionRef.doc(itemValue!.id);
 

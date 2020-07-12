@@ -15,7 +15,7 @@ function authedApp(auth: any) {
 describe('Push Created', () => {
     afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
+        await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
     it('should push documents to firestore when adding new objects in watermelonDB', async () => {
@@ -66,7 +66,7 @@ describe('Push Created', () => {
 describe('Push Updated', () => {
     afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
+        await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
     it('should update documents in firestore when updating objects in watermelonDB', async () => {
@@ -106,8 +106,8 @@ describe('Push Updated', () => {
 
         const todosSnapshot = await fireTodosRef.get();
 
-        const firstTodoSnapshot = todosSnapshot.docs.find(t => t.data().text === 'todo 1');
-        const updatedTodoSnapshot = todosSnapshot.docs.find(t => t.data().text === 'updated todo');
+        const firstTodoSnapshot = todosSnapshot.docs.find((t) => t.data().text === 'todo 1');
+        const updatedTodoSnapshot = todosSnapshot.docs.find((t) => t.data().text === 'updated todo');
 
         expect(firstTodoSnapshot).not.toBeUndefined();
         expect(updatedTodoSnapshot).not.toBeUndefined();
@@ -119,7 +119,7 @@ describe('Push Updated', () => {
 describe('Push Deleted', () => {
     afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
+        await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
     it('should mark documents in firestore as Deleted when marking objects as deleted in watermelonDB', async () => {
@@ -157,8 +157,8 @@ describe('Push Deleted', () => {
 
         const todosSnapshot = await fireTodosRef.get();
 
-        const firstTodoSnapshot = todosSnapshot.docs.find(t => t.data().text === 'todo 1');
-        const deletedTodoSnapshot = todosSnapshot.docs.find(t => t.data().text === 'todo 2');
+        const firstTodoSnapshot = todosSnapshot.docs.find((t) => t.data().text === 'todo 1');
+        const deletedTodoSnapshot = todosSnapshot.docs.find((t) => t.data().text === 'todo 2');
 
         expect(firstTodoSnapshot).not.toBeUndefined();
         expect(deletedTodoSnapshot).not.toBeUndefined();

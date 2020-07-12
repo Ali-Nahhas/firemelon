@@ -15,7 +15,7 @@ function authedApp(auth: any) {
 describe('extra', () => {
     afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
+        await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
     it('should not try to update created document', async () => {
