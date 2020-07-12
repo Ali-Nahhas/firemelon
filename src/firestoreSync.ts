@@ -81,57 +81,94 @@ export async function syncFireMelon(
             return { changes, timestamp: +syncTimestamp };
         },
 
-        pushChanges: async ({ changes }) => {
-            await Promise.all(
-                map(changes, async (row, collectionName) => {
-                    const collectionRef = db.collection(collectionName);
-                    const collectionOptions = syncObj[collectionName];
+        pushChanges: async ({ changes, lastPulledAt }) => {
+            await db.runTransaction(async (transaction) => {
+                await Promise.all(
+                    map(changes, async (row, collectionName) => {
+                        const collectionRef = db.collection(collectionName);
+                        const collectionOptions = syncObj[collectionName];
 
-                    await Promise.all(
-                        map(row, async (arrayOfChanged, changeName) => {
-                            const isDelete = changeName === 'deleted';
+                        await Promise.all(
+                            map(row, async (arrayOfChanged, changeName) => {
+                                const isDelete = changeName === 'deleted';
 
-                            await Promise.all(
-                                map(arrayOfChanged, async (doc) => {
-                                    const itemValue = isDelete ? null : (doc.valueOf() as Item);
-                                    const docRef = isDelete
-                                        ? collectionRef.doc(doc.toString())
-                                        : collectionRef.doc(itemValue!.id);
+                                await Promise.all(
+                                    map(arrayOfChanged, async (doc) => {
+                                        const itemValue = isDelete ? null : (doc.valueOf() as Item);
+                                        const docRef = isDelete
+                                            ? collectionRef.doc(doc.toString())
+                                            : collectionRef.doc(itemValue!.id);
 
-                                    const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
-                                    const data = isDelete ? null : omit(itemValue, ommited);
+                                        const ommited = [
+                                            ...defaultExcluded,
+                                            ...(collectionOptions.excludedFields || []),
+                                        ];
+                                        const data = isDelete ? null : omit(itemValue, ommited);
 
-                                    switch (changeName) {
-                                        case 'created':
-                                            await docRef.set({
-                                                ...data,
-                                                createdAt: getTimestamp(),
-                                                sessionId,
-                                            });
-                                            break;
+                                        switch (changeName) {
+                                            case 'created': {
+                                                transaction.set(docRef, {
+                                                    ...data,
+                                                    createdAt: getTimestamp(),
+                                                    updatedAt: getTimestamp(),
+                                                    sessionId,
+                                                });
 
-                                        case 'updated':
-                                            await docRef.update({
-                                                ...data,
-                                                sessionId,
-                                                updatedAt: getTimestamp(),
-                                            });
-                                            break;
+                                                break;
+                                            }
 
-                                        case 'deleted':
-                                            await docRef.update({
-                                                deletedAt: getTimestamp(),
-                                                isDeleted: true,
-                                                sessionId,
-                                            });
-                                            break;
-                                    }
-                                }),
-                            );
-                        }),
-                    );
-                }),
-            );
+                                            case 'updated': {
+                                                const docFromServer = await transaction.get(docRef);
+                                                const { deletedAt, updatedAt } = docFromServer.data();
+
+                                                if (updatedAt.toDate() > lastPulledAt) {
+                                                    throw new Error(DOCUMENT_WAS_MODIFIED_ERROR);
+                                                }
+
+                                                if (deletedAt?.toDate() > lastPulledAt) {
+                                                    throw new Error(DOCUMENT_WAS_DELETED_ERROR);
+                                                }
+
+                                                transaction.update(docRef, {
+                                                    ...data,
+                                                    sessionId,
+                                                    updatedAt: getTimestamp(),
+                                                });
+
+                                                break;
+                                            }
+
+                                            case 'deleted': {
+                                                const docFromServer = await transaction.get(docRef);
+                                                const { deletedAt, updatedAt } = docFromServer.data();
+
+                                                if (updatedAt.toDate() > lastPulledAt) {
+                                                    throw new Error(DOCUMENT_WAS_MODIFIED_ERROR);
+                                                }
+
+                                                if (deletedAt?.toDate() > lastPulledAt) {
+                                                    throw new Error(DOCUMENT_WAS_DELETED_ERROR);
+                                                }
+
+                                                transaction.update(docRef, {
+                                                    deletedAt: getTimestamp(),
+                                                    isDeleted: true,
+                                                    sessionId,
+                                                });
+
+                                                break;
+                                            }
+                                        }
+                                    }),
+                                );
+                            }),
+                        );
+                    }),
+                );
+            });
         },
     });
 }
+
+export const DOCUMENT_WAS_MODIFIED_ERROR = 'DOCUMENT WAS MODIFIED DURING PULL AND PUSH OPERATIONS';
+export const DOCUMENT_WAS_DELETED_ERROR = 'DOCUMENT WAS DELETED DURING PULL AND PUSH OPERATIONS';
