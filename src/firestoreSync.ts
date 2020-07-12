@@ -82,48 +82,56 @@ export async function syncFireMelon(
         },
 
         pushChanges: async ({ changes }) => {
-            map(changes, (row, collectionName) => {
-                const collectionRef = db.collection(collectionName);
-                const collectionOptions = syncObj[collectionName];
+            await Promise.all(
+                map(changes, async (row, collectionName) => {
+                    const collectionRef = db.collection(collectionName);
+                    const collectionOptions = syncObj[collectionName];
 
-                map(row, (arrayOfChanged, changeName) => {
-                    const isDelete = changeName === 'deleted';
+                    await Promise.all(
+                        map(row, async (arrayOfChanged, changeName) => {
+                            const isDelete = changeName === 'deleted';
 
-                    map(arrayOfChanged, async (doc) => {
-                        const itemValue = isDelete ? null : (doc.valueOf() as Item);
-                        const docRef = isDelete ? collectionRef.doc(doc.toString()) : collectionRef.doc(itemValue!.id);
+                            await Promise.all(
+                                map(arrayOfChanged, async (doc) => {
+                                    const itemValue = isDelete ? null : (doc.valueOf() as Item);
+                                    const docRef = isDelete
+                                        ? collectionRef.doc(doc.toString())
+                                        : collectionRef.doc(itemValue!.id);
 
-                        const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
-                        const data = isDelete ? null : omit(itemValue, ommited);
+                                    const ommited = [...defaultExcluded, ...(collectionOptions.excludedFields || [])];
+                                    const data = isDelete ? null : omit(itemValue, ommited);
 
-                        switch (changeName) {
-                            case 'created':
-                                await docRef.set({
-                                    ...data,
-                                    createdAt: getTimestamp(),
-                                    sessionId,
-                                });
-                                break;
+                                    switch (changeName) {
+                                        case 'created':
+                                            await docRef.set({
+                                                ...data,
+                                                createdAt: getTimestamp(),
+                                                sessionId,
+                                            });
+                                            break;
 
-                            case 'updated':
-                                docRef.update({
-                                    ...data,
-                                    sessionId,
-                                    updatedAt: getTimestamp(),
-                                });
-                                break;
+                                        case 'updated':
+                                            await docRef.update({
+                                                ...data,
+                                                sessionId,
+                                                updatedAt: getTimestamp(),
+                                            });
+                                            break;
 
-                            case 'deleted':
-                                docRef.update({
-                                    deletedAt: getTimestamp(),
-                                    isDeleted: true,
-                                    sessionId,
-                                });
-                                break;
-                        }
-                    });
-                });
-            });
+                                        case 'deleted':
+                                            await docRef.update({
+                                                deletedAt: getTimestamp(),
+                                                isDeleted: true,
+                                                sessionId,
+                                            });
+                                            break;
+                                    }
+                                }),
+                            );
+                        }),
+                    );
+                }),
+            );
         },
     });
 }
