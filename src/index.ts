@@ -1,1 +1,2 @@
-export { syncFireMelon } from './firestoreSync';
+export * from './config';
+export * from './sync';

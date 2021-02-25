@@ -1,66 +1,67 @@
 {
-    "name": "firemelon",
-    "version": "0.0.11",
-    "main": "lib/index.js",
-    "files": [
-        "lib/**/*"
-    ],
-    "author": "Ali Allaf <ali.allaf@hypatia.tech>",
-    "license": "MIT",
-    "description": "A simple way to sync between WatermelonDB and Firebase Firestore",
-    "types": "lib/index.d.ts",
-    "scripts": {
-        "test": "concurrently \"npm run run-emulator\" \"wait-on tcp:8080 && npm run exec-test && fuser -k 8080/tcp\"",
-        "exec-test": "jest --coverage --runInBand --forceExit",
-        "test:watch": "jest --coverage --watch --runInBand",
-        "build": "tsc",
-        "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
-        "lint": "eslint -p tsconfig.json",
-        "version": "git add -A src",
-        "postversion": "git push && git push --tags",
-        "run-emulator": "firebase emulators:start --only firestore"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/AliAllaf/firemelon.git"
-    },
-    "keywords": [
-        "Firestore",
-        "WatermelonDB",
-        "Firebase",
-        "Sync",
-        "Synchronization"
-    ],
-    "bugs": {
-        "url": "https://github.com/AliAllaf/firemelon/issues"
-    },
-    "homepage": "https://github.com/AliAllaf/firemelon#readme",
-    "devDependencies": {
-        "@babel/plugin-proposal-class-properties": "^7.10.4",
-        "@babel/plugin-proposal-decorators": "^7.10.4",
-        "@babel/plugin-transform-runtime": "^7.10.4",
-        "@firebase/app": "^0.6.7",
-        "@firebase/testing": "^0.20.5",
-        "@grpc/proto-loader": "^0.5.4",
-        "@types/jest": "^26.0.4",
-        "@types/lodash": "^4.14.157",
-        "concurrently": "^5.2.0",
-        "firebase-tools": "^8.5.0",
-        "jest": "^26.1.0",
-        "eslint-plugin-prettier": "^3.1.3",
-        "lodash.clonedeep": "^4.5.0",
-        "prettier": "^2.0.5",
-        "@typescript-eslint/eslint-plugin": "^3.1.0",
-        "@typescript-eslint/parser": "^3.1.0",
-        "ts-jest": "^26.1.1",
-        "eslint": "^7.4.0",
-        "eslint-config-prettier": "^6.11.0",
-        "typescript": "^3.9.6",
-        "wait-on": "^5.0.3",
-        "worker-loader": "^2.0.0"
-    },
-    "dependencies": {
-        "@nozbe/watermelondb": "^0.18.0",
-        "lodash": "^4.17.19"
-    }
+  "name": "firemelon",
+  "version": "0.0.11",
+  "main": "lib/index.js",
+  "files": [
+    "lib/**/*"
+  ],
+  "author": "Ali Allaf <ali.allaf@hypatia.tech>",
+  "license": "MIT",
+  "description": "A simple way to sync between WatermelonDB and Firebase Firestore",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "test": "concurrently \"npm run run-emulator\" \"wait-on tcp:8080 && npm run exec-test && fuser -k 8080/tcp\"",
+    "exec-test": "jest --coverage --runInBand --forceExit",
+    "test:watch": "jest --coverage --watch --runInBand",
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "eslint -p tsconfig.json",
+    "version": "git add -A src",
+    "postversion": "git push && git push --tags",
+    "run-emulator": "firebase emulators:start --only firestore"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AliAllaf/firemelon.git"
+  },
+  "keywords": [
+    "Firestore",
+    "WatermelonDB",
+    "Firebase",
+    "Sync",
+    "Synchronization"
+  ],
+  "bugs": {
+    "url": "https://github.com/AliAllaf/firemelon/issues"
+  },
+  "homepage": "https://github.com/AliAllaf/firemelon#readme",
+  "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/plugin-proposal-decorators": "^7.10.4",
+    "@babel/plugin-transform-runtime": "^7.10.4",
+    "@firebase/app": "^0.6.7",
+    "@firebase/testing": "^0.20.5",
+    "@grpc/proto-loader": "^0.5.4",
+    "@types/jest": "^26.0.4",
+    "@types/lodash": "^4.14.157",
+    "@typescript-eslint/eslint-plugin": "^3.1.0",
+    "@typescript-eslint/parser": "^3.1.0",
+    "concurrently": "^5.2.0",
+    "eslint": "^7.4.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
+    "firebase": "^8.2.9",
+    "firebase-tools": "^8.5.0",
+    "jest": "^26.1.0",
+    "lodash.clonedeep": "^4.5.0",
+    "prettier": "^2.0.5",
+    "ts-jest": "^26.1.1",
+    "typescript": "^3.9.6",
+    "wait-on": "^5.0.3",
+    "worker-loader": "^2.0.0"
+  },
+  "dependencies": {
+    "@nozbe/watermelondb": "^0.20.0",
+    "lodash": "^4.17.19"
+  }
 }
