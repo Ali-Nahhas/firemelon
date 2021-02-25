@@ -135,6 +135,7 @@ export const sync = async (database: Database, sessionId: string, config: SyncCo
                             createdAt: getTimestampValue(),
                             updatedAt: getTimestampValue(),
                             sessionId,
+                            userId,
                           },
                           collectionName,
                           docRef,

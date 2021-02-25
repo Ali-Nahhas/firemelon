@@ -4,7 +4,7 @@ import { Database } from './types/rtdb';
 
 export interface SyncConfig {
   objects: SyncObj;
-  storage?: SyncStorage;
+  storage: SyncStorage;
   getTimestamp?: () => any;
   authenticated?: boolean;
   getUserId?: () => Promise<string>;
