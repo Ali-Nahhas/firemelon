@@ -60,7 +60,7 @@
         "worker-loader": "^2.0.0"
     },
     "dependencies": {
-        "@nozbe/watermelondb": "^0.18.0",
+        "@nozbe/watermelondb": "../WatermelonDB-FTS/dist",
         "lodash": "^4.17.19"
     }
 }
