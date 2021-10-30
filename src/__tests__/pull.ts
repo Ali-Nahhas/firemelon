@@ -28,9 +28,10 @@ describe('Pull Created', () => {
 
         const obj: SyncObj = {
             todos: {},
+            users: {},
         };
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await firstMelonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -69,9 +70,10 @@ describe('Pull Updated', () => {
 
         const obj: SyncObj = {
             todos: {},
+            users: {},
         };
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await firstMelonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -84,7 +86,7 @@ describe('Pull Updated', () => {
         await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
 
         const firstMelonTodoCollection = await firstMelonTodosRef.query().fetch();
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await firstMelonTodoCollection[0].update((todo: any) => {
                 todo.text = 'updated todo';
             });
@@ -120,9 +122,10 @@ describe('Pull Deleted', () => {
 
         const obj: SyncObj = {
             todos: {},
+            users: {},
         };
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await firstMelonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -135,7 +138,7 @@ describe('Pull Deleted', () => {
         await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
 
         const firstMelonTodoCollection = await firstMelonTodosRef.query().fetch();
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await firstMelonTodoCollection[0].markAsDeleted();
         });
 

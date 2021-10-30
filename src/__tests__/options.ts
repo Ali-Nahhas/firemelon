@@ -1,5 +1,6 @@
 import * as firebase from '@firebase/testing';
 import { syncFireMelon } from '../index';
+import { FirestoreModule } from '../types/firestore';
 import { SyncObj } from '../types/interfaces';
 import newDatabase, { Todo } from '../utils/schema';
 import timeout from '../utils/timeout';
@@ -28,9 +29,10 @@ describe('Options Excluded Fields', () => {
             todos: {
                 excludedFields: ['color'],
             },
+            users: {},
         };
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await firstMelonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
                 todo.color = 'red';
@@ -48,12 +50,12 @@ describe('Options Excluded Fields', () => {
 });
 
 describe('Options Custom Query', () => {
-    afterAll(async () => {
+    afterEach(async () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
-    it('should sync performing the custom query passed in options', async () => {
+    it('should sync performing the custom pull query passed in options', async () => {
         const app1 = authedApp({ uid: 'owner' });
 
         const firstDatabase = newDatabase();
@@ -62,15 +64,16 @@ describe('Options Custom Query', () => {
         const firstMelonTodosRef = firstDatabase.collections.get<Todo>('todos');
         const secondMelonTodosRef = secondDatabase.collections.get<Todo>('todos');
 
-        const fireTodosRef = app1.collection('todos').where('color', '==', 'red');
+        const fireTodosRef = (db: FirestoreModule, collectionName: string) => db.collection(collectionName).where('color', '==', 'red');
 
         const obj: SyncObj = {
             todos: {
-                customQuery: fireTodosRef,
+                customPullQuery: (db: FirestoreModule, collectionName: string) => fireTodosRef(db, collectionName),
             },
+            users: {},
         };
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await firstMelonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
                 todo.color = 'red';
@@ -92,5 +95,45 @@ describe('Options Custom Query', () => {
         expect(secondMelonTodoCollection.length).toBe(1);
         expect(secondMelonTodoCollection[0].color).toBe('red');
         expect(secondMelonTodoCollection[0].text).toBe('todo 1');
+    });
+
+    it('should sync performing the custom push collection in options', async () => {
+        const app1 = authedApp({ uid: 'owner' });
+
+        const firstDatabase = newDatabase();
+        const secondDatabase = newDatabase();
+
+        const firstMelonTodosRef = firstDatabase.collections.get<Todo>('todos');
+        const secondMelonTodosRef = secondDatabase.collections.get<Todo>('todos');
+
+        const fireTodosRef = (db: FirestoreModule, collectionName: string) => db.collection(collectionName); // use similar collection location here.. just for testing purposes anyway
+
+        const obj: SyncObj = {
+            todos: {
+                customPushCollection: (db: FirestoreModule, collectionName: string) => fireTodosRef(db, collectionName),
+            },
+            users: {},
+        };
+
+        await firstDatabase.write(async () => {
+            await firstMelonTodosRef.create((todo: any) => {
+                todo.text = 'todo 1';
+                todo.color = 'red';
+            });
+            await firstMelonTodosRef.create((todo: any) => {
+                todo.text = 'todo 2';
+                todo.color = 'blue';
+            });
+        });
+
+        await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
+
+        await timeout(500);
+
+        await syncFireMelon(secondDatabase, obj, app1, 'secondSessionId', () => new Date());
+
+        const secondMelonTodoCollection = await secondMelonTodosRef.query().fetch();
+
+        expect(secondMelonTodoCollection.length).toBe(2);
     });
 });

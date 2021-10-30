@@ -19,9 +19,12 @@ export async function syncFireMelon(
     db: FirestoreModule,
     sessionId: string,
     getTimestamp: () => any = () => new Date(),
+    watermelonSyncArgs: Object = {}
 ) {
     await synchronize({
         database,
+
+        ...watermelonSyncArgs,
 
         pullChanges: async ({ lastPulledAt }) => {
             const syncTimestamp = new Date();
@@ -33,14 +36,15 @@ export async function syncFireMelon(
             await Promise.all(
                 map(collections, async (collectionName) => {
                     const collectionOptions = syncObj[collectionName];
-                    const query = collectionOptions.customQuery || db.collection(collectionName);
+                    const query = (collectionOptions.customPullQuery && collectionOptions.customPullQuery(db, collectionName)) 
+                        || db.collection(collectionName);
 
                     const [createdSN, deletedSN, updatedSN] = await Promise.all([
-                        query.where('createdAt', '>=', lastPulledAtTime).where('createdAt', '<=', syncTimestamp).get(),
-                        query.where('deletedAt', '>=', lastPulledAtTime).where('deletedAt', '<=', syncTimestamp).get(),
-                        query.where('updatedAt', '>=', lastPulledAtTime).where('updatedAt', '<=', syncTimestamp).get(),
+                        query.where('server_created_at', '>=', lastPulledAtTime).where('server_created_at', '<=', syncTimestamp).get(),
+                        query.where('server_deleted_at', '>=', lastPulledAtTime).where('server_deleted_at', '<=', syncTimestamp).get(),
+                        query.where('server_updated_at', '>=', lastPulledAtTime).where('server_updated_at', '<=', syncTimestamp).get(),
                     ]);
-
+                
                     const created = createdSN.docs
                         .filter((t) => t.data().sessionId !== sessionId)
                         .map((createdDoc) => {
@@ -85,8 +89,8 @@ export async function syncFireMelon(
             await db.runTransaction(async (transaction) => {
                 await Promise.all(
                     map(changes, async (row, collectionName) => {
-                        const collectionRef = db.collection(collectionName);
                         const collectionOptions = syncObj[collectionName];
+                        const collectionRef = (collectionOptions.customPushCollection && collectionOptions.customPushCollection(db, collectionName)) || db.collection(collectionName);
 
                         await Promise.all(
                             map(row, async (arrayOfChanged, changeName) => {
@@ -109,8 +113,8 @@ export async function syncFireMelon(
                                             case 'created': {
                                                 transaction.set(docRef, {
                                                     ...data,
-                                                    createdAt: getTimestamp(),
-                                                    updatedAt: getTimestamp(),
+                                                    server_created_at: getTimestamp(),
+                                                    server_updated_at: getTimestamp(),
                                                     sessionId,
                                                 });
 
@@ -119,7 +123,7 @@ export async function syncFireMelon(
 
                                             case 'updated': {
                                                 const docFromServer = await transaction.get(docRef);
-                                                const { deletedAt, updatedAt } = docFromServer.data();
+                                                const { server_deleted_at: deletedAt, server_updated_at: updatedAt } = docFromServer.data();
 
                                                 if (updatedAt.toDate() > lastPulledAt) {
                                                     throw new Error(DOCUMENT_WAS_MODIFIED_ERROR);
@@ -132,7 +136,7 @@ export async function syncFireMelon(
                                                 transaction.update(docRef, {
                                                     ...data,
                                                     sessionId,
-                                                    updatedAt: getTimestamp(),
+                                                    server_updated_at: getTimestamp(),
                                                 });
 
                                                 break;
@@ -140,7 +144,7 @@ export async function syncFireMelon(
 
                                             case 'deleted': {
                                                 const docFromServer = await transaction.get(docRef);
-                                                const { deletedAt, updatedAt } = docFromServer.data();
+                                                const { server_deleted_at: deletedAt, server_updated_at: updatedAt } = docFromServer.data();
 
                                                 if (updatedAt.toDate() > lastPulledAt) {
                                                     throw new Error(DOCUMENT_WAS_MODIFIED_ERROR);
@@ -151,7 +155,7 @@ export async function syncFireMelon(
                                                 }
 
                                                 transaction.update(docRef, {
-                                                    deletedAt: getTimestamp(),
+                                                    server_deleted_at: getTimestamp(),
                                                     isDeleted: true,
                                                     sessionId,
                                                 });

@@ -27,7 +27,7 @@ describe('Push Created', () => {
         const melonUsersRef = db.collections.get<User>('users');
         const fireUsersRef = app1.collection('users');
 
-        await db.action(async () => {
+        await db.write(async () => {
             await melonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -74,15 +74,17 @@ describe('Push Updated', () => {
 
         const db = newDatabase();
         const melonTodosRef = db.collections.get<Todo>('todos');
+        const melonUsers = db.collections.get('users');
         const fireTodosRef = app1.collection('todos');
 
         const obj: SyncObj = {
             todos: {},
+            users: {},
         };
 
         let updated: Model;
 
-        await db.action(async () => {
+        await db.write(async () => {
             await melonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -96,7 +98,7 @@ describe('Push Updated', () => {
 
         await timeout(500);
 
-        await db.action(async () => {
+        await db.write(async () => {
             await updated.update((todo: any) => {
                 todo.text = 'updated todo';
             });
@@ -131,11 +133,12 @@ describe('Push Deleted', () => {
 
         const obj: SyncObj = {
             todos: {},
+            users: {},
         };
 
         let deleted: Model;
 
-        await db.action(async () => {
+        await db.write(async () => {
             await melonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -149,7 +152,7 @@ describe('Push Deleted', () => {
 
         await timeout(500);
 
-        await db.action(async () => {
+        await db.write(async () => {
             await deleted.markAsDeleted();
         });
 
