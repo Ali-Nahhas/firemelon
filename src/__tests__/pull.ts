@@ -28,7 +28,7 @@ describe('Pull Created', () => {
 
         const obj: SyncObj = {
             todos: {},
-            users: {},
+            users: {}
         };
 
         await firstDatabase.write(async () => {
@@ -122,7 +122,7 @@ describe('Pull Deleted', () => {
 
         const obj: SyncObj = {
             todos: {},
-            users: {},
+            users: {}
         };
 
         await firstDatabase.write(async () => {
