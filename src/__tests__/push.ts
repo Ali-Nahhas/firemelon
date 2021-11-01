@@ -13,9 +13,40 @@ function authedApp(auth: any) {
 }
 
 describe('Push Created', () => {
-    afterAll(async () => {
+    afterEach(async () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map((app) => app.delete()));
+    });
+
+    it('should perform as expected for more than 500 docs', async () => {
+        await firebase.clearFirestoreData({ projectId });
+
+        const app1 = authedApp({ uid: 'owner' });
+
+        const db = newDatabase();
+        const melonTodosRef = db.collections.get<Todo>('todos');
+        const fireTodosRef = app1.collection('todos');
+
+        const obj: SyncObj = {
+            todos: {},
+            users: {},
+        };
+
+        await db.write(async () => {
+            for(let i = 0; i<510; i++){
+                await melonTodosRef.create((todo: any) => {
+                    todo.text = 'todo';
+                });
+            }
+        });
+
+        await syncFireMelon(db, obj, app1, sessionId, () => new Date());
+
+        await timeout(500);
+
+        const todosSnapshot = await fireTodosRef.get();
+
+        expect(todosSnapshot.docs.length).toBe(510);
     });
 
     it('should push documents to firestore when adding new objects in watermelonDB', async () => {
