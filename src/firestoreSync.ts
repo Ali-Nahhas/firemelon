@@ -21,14 +21,12 @@ export async function syncFireMelon(
     getTimestamp: () => any = () => new Date(),
     watermelonSyncArgs: Object = {}
 ) {
-    console.debug('syncFireMelon > will sync...')
     await synchronize({
         database,
 
         ...watermelonSyncArgs,
 
         pullChanges: async ({ lastPulledAt }) => {
-            console.log('syncFireMelon > pullChanges')
             const syncTimestamp = new Date();
             const lastPulledAtTime = new Date(lastPulledAt || 0);
             let changes = {};
@@ -89,7 +87,6 @@ export async function syncFireMelon(
 
         pushChanges: async ({ changes, lastPulledAt }) => {
 
-            console.debug('syncFireMelon > pushChanges')
             let docRefs = await Promise.all(Object.keys(changes).map(async (collectionName: string) => {
                 const createdIds = changes[collectionName].created.map(id => id);
                 const deletedIds = changes[collectionName].deleted.map(id => id);
@@ -130,10 +127,10 @@ export async function syncFireMelon(
                                 const isDelete = changeName === 'deleted';
 
                                 await Promise.all(
-                                    map(arrayOfChanged, async (doc) => {
-                                        const itemValue = isDelete ? null : (doc.valueOf() as Item);
+                                    map(arrayOfChanged, async (wmObj) => {
+                                        const itemValue = isDelete ? null : (wmObj.valueOf() as Item);
                                         const docRef = isDelete
-                                            ? collectionRef.doc(doc.toString())
+                                            ? collectionRef.doc(wmObj.toString())
                                             : collectionRef.doc(itemValue!.id);
 
                                         const ommited = [
@@ -183,9 +180,9 @@ export async function syncFireMelon(
                                             case 'deleted': {
 
                                                 //@ts-ignore
-                                                const docFromServer = docRefs[collectionName].deleted.find(doc => doc.id == data.id)
+                                                const docFromServer = docRefs[collectionName].deleted.find(doc => doc.id === wmObj.toString())
                                                 if (docFromServer) {
-                                                    const { server_deleted_at: deletedAt, server_updated_at: updatedAt } = docFromServer.data();
+                                                    const { server_deleted_at: deletedAt, server_updated_at: updatedAt } = docFromServer;
 
                                                     if (updatedAt.toDate() > lastPulledAt) {
                                                         throw new Error(DOCUMENT_WAS_MODIFIED_ERROR);
@@ -222,5 +219,5 @@ export async function syncFireMelon(
 export const DOCUMENT_WAS_MODIFIED_ERROR = 'DOCUMENT WAS MODIFIED DURING PULL AND PUSH OPERATIONS';
 export const DOCUMENT_WAS_DELETED_ERROR = 'DOCUMENT WAS DELETED DURING PULL AND PUSH OPERATIONS';
 export const DOCUMENT_TRYING_TO_CREATE_ALREADY_EXISTS_ON_SERVER_ERROR = 'TYRING TO CREATE A DOCUMENT THAT ALREADY EXISTS ON THE SERVER'
-export const DOCUMENT_TRYING_TO_UPDATE_BUT_DOESNT_EXIST_ON_SERVER_ERROR = 'TYRING TO UPDATE A DOCUMENT BUT IT WAN NOT FOUND ON THE SERVER'
-export const DOCUMENT_TRYING_TO_DELETE_BUT_DOESNT_EXIST_ON_SERVER_ERROR = 'TYRING TO DELETE A DOCUMENT BUT IT WAN NOT FOUND ON THE SERVER'
+export const DOCUMENT_TRYING_TO_UPDATE_BUT_DOESNT_EXIST_ON_SERVER_ERROR = 'TYRING TO UPDATE A DOCUMENT BUT IT WAS NOT FOUND ON THE SERVER'
+export const DOCUMENT_TRYING_TO_DELETE_BUT_DOESNT_EXIST_ON_SERVER_ERROR = 'TYRING TO DELETE A DOCUMENT BUT IT WAS NOT FOUND ON THE SERVER'
