@@ -82,14 +82,25 @@ export async function syncFireMelon(
                 }),
             );
 
+            const totalChanges = Object.keys(changes).reduce((prev, curr) =>
+                //@ts-ignore
+                prev + changes[curr].created.length + changes[curr].deleted.length + changes[curr].updated.length,
+                0);
+            console.log(`FireMelon > Pull > Total changes: ${totalChanges}`);
+
             return { changes, timestamp: +syncTimestamp };
         },
 
         pushChanges: async ({ changes, lastPulledAt }) => {
 
+            const totalChanges = Object.keys(changes).reduce((prev, curr) =>
+                prev + changes[curr].created.length + changes[curr].deleted.length + changes[curr].updated.length,
+                0);
+            console.log(`FireMelon > Push > Total changes: ${totalChanges}`);
+
             let docRefs = await Promise.all(Object.keys(changes).map(async (collectionName: string) => {
-                const createdIds = changes[collectionName].created.map(id => id);
                 const deletedIds = changes[collectionName].deleted.map(id => id);
+                const createdIds = changes[collectionName].created.map(data => data.id);
                 const updatedIds = changes[collectionName].updated.map(data => data.id);
 
                 const collectionOptions = syncObj[collectionName];
@@ -101,14 +112,10 @@ export async function syncFireMelon(
                     throw new Error(DOCUMENT_TRYING_TO_CREATE_ALREADY_EXISTS_ON_SERVER_ERROR);
                 }
 
-                return {
-                    [collectionName]: {
-                        //@ts-ignore
-                        deleted: deletedIds.length > 0 ? (await queryDocsInValue(collectionRef, 'id', deletedIds)) : [],
-                        //@ts-ignore
-                        updated: updatedIds.length > 0 ? (await queryDocsInValue(collectionRef, 'id', updatedIds)) : [] //.map(doc => {console.debug({doc}); console.debug(doc.data()); doc.data()})
-                    }
-                }
+                const deleted = deletedIds.length > 0 ? (await queryDocsInValue(collectionRef, 'id', deletedIds)) : [];
+                const updated = updatedIds.length > 0 ? (await queryDocsInValue(collectionRef, 'id', updatedIds)) : [];
+
+                return { [collectionName]: { deleted, updated } }
             }))
 
             // collapse to single object: {users: {deleted: [], updated: []}, todos: {deleted:[], updated:[]}}
@@ -150,7 +157,7 @@ export async function syncFireMelon(
                                 });
 
                                 operationCounter++;
-                                
+
                                 break;
                             }
 
@@ -224,8 +231,17 @@ export async function syncFireMelon(
                 })
             })
 
-            for (const batch of batchArray) {
-                await batch.commit()
+            console.log(`FireMelon > Push > Will commit ${batchArray.length} batches`)
+            let counter = 1
+            try {
+                for (const batch of batchArray) {
+                    console.log(`FireMelon > Push > Batch ${counter} > commit`)
+                    await batch.commit()
+                    console.log(`FireMelon > Push > Commit batch ${counter} done`)
+                    counter++;
+                }
+            } catch (error) {
+                console.error(error);
             }
         },
     });
@@ -248,6 +264,7 @@ const queryDocsInValue = (collection: CollectionRef, field: string, array: any[]
             // firestore limits batches to 10
             const batch = array.splice(0, 10);
 
+
             // add the batch request to to a queue
             batches.push(
                 new Promise(response => {
@@ -259,14 +276,19 @@ const queryDocsInValue = (collection: CollectionRef, field: string, array: any[]
                             [...batch]
                         )
                         .get()
-                        .then(results => response(results.docs.map(result => ({ ...result.data() }))))
+                        .then(results => {
+                            response(results.docs.map(result => ({ ...result.data() })))
+                        })
+                        .catch((err) => {
+                            console.error(err)
+                        });
                 })
             )
         }
 
         // after all of the data is fetched, return it
-        Promise.all(batches).then(content => {
-            res(content.flat());
-        })
+        Promise.all(batches)
+            .then(content => res(content.flat()))
+            .catch((err) => console.error(err));
     })
 }
