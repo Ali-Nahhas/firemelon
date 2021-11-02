@@ -18,7 +18,7 @@ describe('Push Created', () => {
         await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
-    it('should perform as expected for more than 500 docs', async () => {
+    it('should perform as successfully for more than 500 docs (Firebase write limit)', async () => {
         await firebase.clearFirestoreData({ projectId });
 
         const app1 = authedApp({ uid: 'owner' });
@@ -32,6 +32,7 @@ describe('Push Created', () => {
             users: {},
         };
 
+        // Create 510 todos
         await db.write(async () => {
             for(let i = 0; i<510; i++){
                 await melonTodosRef.create((todo: any) => {
