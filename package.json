@@ -1,6 +1,6 @@
 {
     "name": "firemelon",
-    "version": "0.0.11",
+    "version": "0.0.12",
     "main": "lib/index.js",
     "files": [
         "lib/**/*"
@@ -44,23 +44,23 @@
         "@grpc/proto-loader": "^0.5.4",
         "@types/jest": "^26.0.4",
         "@types/lodash": "^4.14.157",
-        "concurrently": "^5.2.0",
-        "firebase-tools": "^8.5.0",
-        "jest": "^26.1.0",
-        "eslint-plugin-prettier": "^3.1.3",
-        "lodash.clonedeep": "^4.5.0",
-        "prettier": "^2.0.5",
         "@typescript-eslint/eslint-plugin": "^3.1.0",
         "@typescript-eslint/parser": "^3.1.0",
-        "ts-jest": "^26.1.1",
+        "concurrently": "^5.2.0",
         "eslint": "^7.4.0",
         "eslint-config-prettier": "^6.11.0",
+        "eslint-plugin-prettier": "^3.1.3",
+        "firebase-tools": "^8.5.0",
+        "jest": "^26.1.0",
+        "lodash.clonedeep": "^4.5.0",
+        "prettier": "^2.0.5",
+        "ts-jest": "^26.1.1",
         "typescript": "^3.9.6",
         "wait-on": "^5.0.3",
         "worker-loader": "^2.0.0"
     },
     "dependencies": {
-        "@nozbe/watermelondb": "^0.18.0",
+        "@nozbe/watermelondb": "../WatermelonDB-FTS/dist",
         "lodash": "^4.17.19"
     }
 }

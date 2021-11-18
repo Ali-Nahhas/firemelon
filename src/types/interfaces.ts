@@ -1,4 +1,4 @@
-import { Query } from './firestore';
+import { CollectionRef, FirestoreModule, Query } from './firestore';
 
 export interface Item {
     id: string;
@@ -6,7 +6,8 @@ export interface Item {
 
 export interface SyncCollectionOptions {
     excludedFields?: string[];
-    customQuery?: Query;
+    customPullQuery?: (db: FirestoreModule, collectionName: string) => Query;
+    customPushCollection?: (db: FirestoreModule, collectionName: string) => CollectionRef;
 }
 
 export interface SyncObj {

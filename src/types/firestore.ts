@@ -40,4 +40,5 @@ export interface Transaction {
 export interface FirestoreModule {
     collection: (collectionPath: string) => CollectionRef;
     runTransaction(updateFunction: (transaction: Transaction) => Promise<any>): Promise<any>;
+    batch: () => any
 }

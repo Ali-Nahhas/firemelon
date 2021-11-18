@@ -1,7 +1,7 @@
 import { Database } from '@nozbe/watermelondb';
 import { synchronize } from '@nozbe/watermelondb/sync';
 import { keys, map, omit } from 'lodash';
-import { FirestoreModule } from './types/firestore';
+import { CollectionRef, FirestoreModule } from './types/firestore';
 import { Item, SyncObj } from './types/interfaces';
 
 /* const ex: SyncObj = {
@@ -19,9 +19,12 @@ export async function syncFireMelon(
     db: FirestoreModule,
     sessionId: string,
     getTimestamp: () => any = () => new Date(),
+    watermelonSyncArgs: Object = {}
 ) {
     await synchronize({
         database,
+
+        ...watermelonSyncArgs,
 
         pullChanges: async ({ lastPulledAt }) => {
             const syncTimestamp = new Date();
@@ -33,12 +36,13 @@ export async function syncFireMelon(
             await Promise.all(
                 map(collections, async (collectionName) => {
                     const collectionOptions = syncObj[collectionName];
-                    const query = collectionOptions.customQuery || db.collection(collectionName);
+                    const query = (collectionOptions.customPullQuery && collectionOptions.customPullQuery(db, collectionName))
+                        || db.collection(collectionName);
 
                     const [createdSN, deletedSN, updatedSN] = await Promise.all([
-                        query.where('createdAt', '>=', lastPulledAtTime).where('createdAt', '<=', syncTimestamp).get(),
-                        query.where('deletedAt', '>=', lastPulledAtTime).where('deletedAt', '<=', syncTimestamp).get(),
-                        query.where('updatedAt', '>=', lastPulledAtTime).where('updatedAt', '<=', syncTimestamp).get(),
+                        query.where('server_created_at', '>=', lastPulledAtTime).where('server_created_at', '<=', syncTimestamp).get(),
+                        query.where('server_deleted_at', '>=', lastPulledAtTime).where('server_deleted_at', '<=', syncTimestamp).get(),
+                        query.where('server_updated_at', '>=', lastPulledAtTime).where('server_updated_at', '<=', syncTimestamp).get(),
                     ]);
 
                     const created = createdSN.docs
@@ -78,97 +82,233 @@ export async function syncFireMelon(
                 }),
             );
 
+            const totalChanges = Object.keys(changes).reduce((prev, curr) =>
+                //@ts-ignore
+                prev + changes[curr].created.length + changes[curr].deleted.length + changes[curr].updated.length,
+                0);
+            console.log(`FireMelon > Pull > Total changes: ${totalChanges}`);
+
             return { changes, timestamp: +syncTimestamp };
         },
 
         pushChanges: async ({ changes, lastPulledAt }) => {
-            await db.runTransaction(async (transaction) => {
-                await Promise.all(
-                    map(changes, async (row, collectionName) => {
-                        const collectionRef = db.collection(collectionName);
-                        const collectionOptions = syncObj[collectionName];
 
-                        await Promise.all(
-                            map(row, async (arrayOfChanged, changeName) => {
-                                const isDelete = changeName === 'deleted';
+            const totalChanges = Object.keys(changes).reduce((prev, curr) =>
+                prev + changes[curr].created.length + changes[curr].deleted.length + changes[curr].updated.length,
+                0);
+            console.log(`FireMelon > Push > Total changes: ${totalChanges}`);
 
-                                await Promise.all(
-                                    map(arrayOfChanged, async (doc) => {
-                                        const itemValue = isDelete ? null : (doc.valueOf() as Item);
-                                        const docRef = isDelete
-                                            ? collectionRef.doc(doc.toString())
-                                            : collectionRef.doc(itemValue!.id);
+            let docRefs = await Promise.all(Object.keys(changes).map(async (collectionName: string) => {
+                const deletedIds = changes[collectionName].deleted.map(id => id);
+                const createdIds = changes[collectionName].created.map(data => data.id);
+                const updatedIds = changes[collectionName].updated.map(data => data.id);
 
-                                        const ommited = [
-                                            ...defaultExcluded,
-                                            ...(collectionOptions.excludedFields || []),
-                                        ];
-                                        const data = isDelete ? null : omit(itemValue, ommited);
+                const collectionOptions = syncObj[collectionName];
+                const collectionRef = (collectionOptions.customPushCollection && collectionOptions.customPushCollection(db, collectionName)) || db.collection(collectionName)
 
-                                        switch (changeName) {
-                                            case 'created': {
-                                                transaction.set(docRef, {
-                                                    ...data,
-                                                    createdAt: getTimestamp(),
-                                                    updatedAt: getTimestamp(),
-                                                    sessionId,
-                                                });
+                const created = createdIds.length > 0 ? (await queryDocsInValue(collectionRef, 'id', createdIds)) : [];
+                const deleted = deletedIds.length > 0 ? (await queryDocsInValue(collectionRef, 'id', deletedIds)) : [];
+                const updated = updatedIds.length > 0 ? (await queryDocsInValue(collectionRef, 'id', updatedIds)) : [];
 
-                                                break;
-                                            }
+                return { [collectionName]: { created, deleted, updated } }
+            }))
 
-                                            case 'updated': {
-                                                const docFromServer = await transaction.get(docRef);
-                                                const { deletedAt, updatedAt } = docFromServer.data();
+            // collapse to single object: {users: {deleted: [], updated: []}, todos: {deleted:[], updated:[]}}
+            docRefs = Object.assign({}, ...docRefs);
 
-                                                if (updatedAt.toDate() > lastPulledAt) {
-                                                    throw new Error(DOCUMENT_WAS_MODIFIED_ERROR);
-                                                }
+            // Batch sync
+            const batchArray: any[] = [];
+            batchArray.push(db.batch());
+            let operationCounter = 0;
+            let batchIndex = 0;
 
-                                                if (deletedAt?.toDate() > lastPulledAt) {
-                                                    throw new Error(DOCUMENT_WAS_DELETED_ERROR);
-                                                }
+            map(changes, async (row, collectionName) => {
+                // This iterates over all the collections, e.g. todos and users
+                const collectionOptions = syncObj[collectionName];
+                const collectionRef = (collectionOptions.customPushCollection && collectionOptions.customPushCollection(db, collectionName)) || db.collection(collectionName);
 
-                                                transaction.update(docRef, {
-                                                    ...data,
-                                                    sessionId,
-                                                    updatedAt: getTimestamp(),
-                                                });
+                map(row, async (arrayOfChanged, changeName) => {
+                    const isDelete = changeName === 'deleted';
 
-                                                break;
-                                            }
+                    map(arrayOfChanged, async (wmObj) => {
+                        const itemValue = isDelete ? null : (wmObj.valueOf() as Item);
+                        const docRef = isDelete
+                            ? collectionRef.doc(wmObj.toString())
+                            : collectionRef.doc(itemValue!.id);
 
-                                            case 'deleted': {
-                                                const docFromServer = await transaction.get(docRef);
-                                                const { deletedAt, updatedAt } = docFromServer.data();
+                        const ommited = [
+                            ...defaultExcluded,
+                            ...(collectionOptions.excludedFields || []),
+                        ];
+                        const data = omit(itemValue, ommited);
 
-                                                if (updatedAt.toDate() > lastPulledAt) {
-                                                    throw new Error(DOCUMENT_WAS_MODIFIED_ERROR);
-                                                }
+                        switch (changeName) {
+                            case 'created': {
+                                //@ts-ignore
+                                const docFromServer = docRefs[collectionName].created.find(doc => doc.id == data.id)
+                                if(docFromServer){
+                                    const warning = `${DOCUMENT_TRYING_TO_CREATE_ALREADY_EXISTS_ON_SERVER_ERROR} - document '${collectionName}' with id: '${data.id}'`
+                                    console.warn(warning);
+                                }
 
-                                                if (deletedAt?.toDate() > lastPulledAt) {
-                                                    throw new Error(DOCUMENT_WAS_DELETED_ERROR);
-                                                }
+                                batchArray[batchIndex].set(docRef, {
+                                    ...data,
+                                    server_created_at: getTimestamp(),
+                                    server_updated_at: getTimestamp(),
+                                    sessionId,
+                                });
 
-                                                transaction.update(docRef, {
-                                                    deletedAt: getTimestamp(),
-                                                    isDeleted: true,
-                                                    sessionId,
-                                                });
+                                operationCounter++;
 
-                                                break;
-                                            }
-                                        }
-                                    }),
-                                );
-                            }),
-                        );
-                    }),
-                );
-            });
+                                break;
+                            }
+
+                            case 'updated': {
+                                //@ts-ignore
+                                const docFromServer = docRefs[collectionName].updated.find(doc => doc.id == data.id)
+                                if (docFromServer) {
+                                    const { server_deleted_at: deletedAt, server_updated_at: updatedAt } = docFromServer;
+
+                                    if (updatedAt.toDate() > lastPulledAt) {
+                                        throw new Error(DOCUMENT_WAS_MODIFIED_ERROR);
+                                    }
+
+                                    if (deletedAt?.toDate() > lastPulledAt) {
+                                        throw new Error(DOCUMENT_WAS_DELETED_ERROR);
+                                    }
+
+                                    batchArray[batchIndex].update(docRef, {
+                                        ...data,
+                                        sessionId,
+                                        server_updated_at: getTimestamp(),
+                                    });
+
+                                } else {
+                                    const warning = `${DOCUMENT_TRYING_TO_UPDATE_BUT_DOESNT_EXIST_ON_SERVER_ERROR} - document '${collectionName}' with id: '${data.id}'`
+                                    console.warn(warning)
+
+                                    batchArray[batchIndex].set(docRef, {
+                                        ...data,
+                                        sessionId,
+                                        server_updated_at: getTimestamp(),
+                                    });
+                                }
+
+
+                                operationCounter++;
+
+                                break;
+                            }
+
+                            case 'deleted': {
+
+                                //@ts-ignore
+                                const docFromServer = docRefs[collectionName].deleted.find(doc => doc.id == wmObj.toString())
+                                if (docFromServer) {
+                                    const { server_deleted_at: deletedAt, server_updated_at: updatedAt } = docFromServer;
+
+                                    if (updatedAt.toDate() > lastPulledAt) {
+                                        throw new Error(DOCUMENT_WAS_MODIFIED_ERROR);
+                                    }
+
+                                    if (deletedAt?.toDate() > lastPulledAt) {
+                                        throw new Error(DOCUMENT_WAS_DELETED_ERROR);
+                                    }
+
+                                    batchArray[batchIndex].update(docRef, {
+                                        server_deleted_at: getTimestamp(),
+                                        isDeleted: true,
+                                        sessionId,
+                                    });
+
+                                } else {
+                                    const warning = `${DOCUMENT_TRYING_TO_DELETE_BUT_DOESNT_EXIST_ON_SERVER_ERROR} - document '${collectionName}' with id: '${wmObj.toString()}'`
+                                    console.warn(warning)
+
+                                    batchArray[batchIndex].set(docRef, {
+                                        server_created_at: getTimestamp(),
+                                        server_updated_at: getTimestamp(),
+                                        server_deleted_at: getTimestamp(),
+                                        isDeleted: true,
+                                        sessionId,
+                                    });
+                                }
+
+                                operationCounter++;
+
+                                break;
+                            }
+                        }
+
+                        // Initialize a new batch if needed -> firestore allows 500 writes per batch.
+                        if (operationCounter === 499) {
+                            batchArray.push(db.batch());
+                            batchIndex++;
+                            operationCounter = 0;
+                        }
+
+                    })
+                })
+            })
+
+            console.log(`FireMelon > Push > Will commit ${batchArray.length} batches`)
+            let counter = 1
+            try {
+                for (const batch of batchArray) {
+                    console.log(`FireMelon > Push > Batch ${counter} > commit`)
+                    await batch.commit()
+                    console.log(`FireMelon > Push > Commit batch ${counter} done`)
+                    counter++;
+                }
+            } catch (error) {
+                console.error(error);
+            }
         },
     });
 }
 
 export const DOCUMENT_WAS_MODIFIED_ERROR = 'DOCUMENT WAS MODIFIED DURING PULL AND PUSH OPERATIONS';
 export const DOCUMENT_WAS_DELETED_ERROR = 'DOCUMENT WAS DELETED DURING PULL AND PUSH OPERATIONS';
+export const DOCUMENT_TRYING_TO_CREATE_ALREADY_EXISTS_ON_SERVER_ERROR = 'TYRING TO CREATE A DOCUMENT THAT ALREADY EXISTS ON THE SERVER - WILL OVERRIDE'
+export const DOCUMENT_TRYING_TO_UPDATE_BUT_DOESNT_EXIST_ON_SERVER_ERROR = 'TYRING TO UPDATE A DOCUMENT BUT IT WAS NOT FOUND ON THE SERVER - WILL CREATE'
+export const DOCUMENT_TRYING_TO_DELETE_BUT_DOESNT_EXIST_ON_SERVER_ERROR = 'TYRING TO DELETE A DOCUMENT BUT IT WAS NOT FOUND ON THE SERVER - WILL CREATE DELETION'
+
+const queryDocsInValue = (collection: CollectionRef, field: string, array: any[]) => {
+    return new Promise((res) => {
+        // don't run if there aren't any ids or a path for the collection
+        if (!array || !array.length || !collection || !field) return res([]);
+
+        let batches = [];
+
+        while (array.length) {
+            // firestore limits batches to 10
+            const batch = array.splice(0, 10);
+
+
+            // add the batch request to to a queue
+            batches.push(
+                new Promise(response => {
+                    collection
+                        .where(
+                            field,
+                            //@ts-ignore
+                            'in',
+                            [...batch]
+                        )
+                        .get()
+                        .then(results => {
+                            response(results.docs.map(result => ({ ...result.data() })))
+                        })
+                        .catch((err) => {
+                            console.error(err)
+                        });
+                })
+            )
+        }
+
+        // after all of the data is fetched, return it
+        Promise.all(batches)
+            .then(content => res(content.flat()))
+            .catch((err) => console.error(err));
+    })
+}

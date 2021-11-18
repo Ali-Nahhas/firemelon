@@ -29,18 +29,19 @@ describe('extra', () => {
 
         const obj: SyncObj = {
             todos: {},
+            users: {}
         };
 
         let created: Model;
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             created = await firstMelonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
         });
         await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await created.update((todo: any) => {
                 todo.text = 'todo 2';
             });

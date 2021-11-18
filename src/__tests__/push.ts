@@ -13,9 +13,41 @@ function authedApp(auth: any) {
 }
 
 describe('Push Created', () => {
-    afterAll(async () => {
+    afterEach(async () => {
         await firebase.clearFirestoreData({ projectId });
         await Promise.all(firebase.apps().map((app) => app.delete()));
+    });
+
+    it('should perform as successfully for more than 500 docs (Firebase write limit)', async () => {
+        await firebase.clearFirestoreData({ projectId });
+
+        const app1 = authedApp({ uid: 'owner' });
+
+        const db = newDatabase();
+        const melonTodosRef = db.collections.get<Todo>('todos');
+        const fireTodosRef = app1.collection('todos');
+
+        const obj: SyncObj = {
+            todos: {},
+            users: {},
+        };
+
+        // Create 510 todos
+        await db.write(async () => {
+            for(let i = 0; i<510; i++){
+                await melonTodosRef.create((todo: any) => {
+                    todo.text = 'todo';
+                });
+            }
+        });
+
+        await syncFireMelon(db, obj, app1, sessionId, () => new Date());
+
+        await timeout(500);
+
+        const todosSnapshot = await fireTodosRef.get();
+
+        expect(todosSnapshot.docs.length).toBe(510);
     });
 
     it('should push documents to firestore when adding new objects in watermelonDB', async () => {
@@ -27,7 +59,7 @@ describe('Push Created', () => {
         const melonUsersRef = db.collections.get<User>('users');
         const fireUsersRef = app1.collection('users');
 
-        await db.action(async () => {
+        await db.write(async () => {
             await melonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -78,11 +110,12 @@ describe('Push Updated', () => {
 
         const obj: SyncObj = {
             todos: {},
+            users: {},
         };
 
         let updated: Model;
 
-        await db.action(async () => {
+        await db.write(async () => {
             await melonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -96,7 +129,7 @@ describe('Push Updated', () => {
 
         await timeout(500);
 
-        await db.action(async () => {
+        await db.write(async () => {
             await updated.update((todo: any) => {
                 todo.text = 'updated todo';
             });
@@ -131,11 +164,12 @@ describe('Push Deleted', () => {
 
         const obj: SyncObj = {
             todos: {},
+            users: {},
         };
 
         let deleted: Model;
 
-        await db.action(async () => {
+        await db.write(async () => {
             await melonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -149,7 +183,7 @@ describe('Push Deleted', () => {
 
         await timeout(500);
 
-        await db.action(async () => {
+        await db.write(async () => {
             await deleted.markAsDeleted();
         });
 
