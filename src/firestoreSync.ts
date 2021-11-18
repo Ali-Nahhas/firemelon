@@ -106,16 +106,11 @@ export async function syncFireMelon(
                 const collectionOptions = syncObj[collectionName];
                 const collectionRef = (collectionOptions.customPushCollection && collectionOptions.customPushCollection(db, collectionName)) || db.collection(collectionName)
 
-                // Check that none of the created docs already exists on the server
-                //@ts-ignore
-                if (createdIds.length > 0 && (await queryDocsInValue(collectionRef, 'id', createdIds)).length) {
-                    throw new Error(DOCUMENT_TRYING_TO_CREATE_ALREADY_EXISTS_ON_SERVER_ERROR);
-                }
-
+                const created = createdIds.length > 0 ? (await queryDocsInValue(collectionRef, 'id', createdIds)) : [];
                 const deleted = deletedIds.length > 0 ? (await queryDocsInValue(collectionRef, 'id', deletedIds)) : [];
                 const updated = updatedIds.length > 0 ? (await queryDocsInValue(collectionRef, 'id', updatedIds)) : [];
 
-                return { [collectionName]: { deleted, updated } }
+                return { [collectionName]: { created, deleted, updated } }
             }))
 
             // collapse to single object: {users: {deleted: [], updated: []}, todos: {deleted:[], updated:[]}}
@@ -149,6 +144,13 @@ export async function syncFireMelon(
 
                         switch (changeName) {
                             case 'created': {
+                                //@ts-ignore
+                                const docFromServer = docRefs[collectionName].created.find(doc => doc.id == data.id)
+                                if(docFromServer){
+                                    const warning = `${DOCUMENT_TRYING_TO_CREATE_ALREADY_EXISTS_ON_SERVER_ERROR} - document '${collectionName}' with id: '${data.id}'`
+                                    console.warn(warning);
+                                }
+
                                 batchArray[batchIndex].set(docRef, {
                                     ...data,
                                     server_created_at: getTimestamp(),
@@ -180,9 +182,18 @@ export async function syncFireMelon(
                                         sessionId,
                                         server_updated_at: getTimestamp(),
                                     });
+
                                 } else {
-                                    throw new Error(DOCUMENT_TRYING_TO_UPDATE_BUT_DOESNT_EXIST_ON_SERVER_ERROR)
+                                    const warning = `${DOCUMENT_TRYING_TO_UPDATE_BUT_DOESNT_EXIST_ON_SERVER_ERROR} - document '${collectionName}' with id: '${data.id}'`
+                                    console.warn(warning)
+
+                                    batchArray[batchIndex].set(docRef, {
+                                        ...data,
+                                        sessionId,
+                                        server_updated_at: getTimestamp(),
+                                    });
                                 }
+
 
                                 operationCounter++;
 
@@ -211,7 +222,16 @@ export async function syncFireMelon(
                                     });
 
                                 } else {
-                                    throw new Error(DOCUMENT_TRYING_TO_DELETE_BUT_DOESNT_EXIST_ON_SERVER_ERROR)
+                                    const warning = `${DOCUMENT_TRYING_TO_DELETE_BUT_DOESNT_EXIST_ON_SERVER_ERROR} - document '${collectionName}' with id: '${wmObj.toString()}'`
+                                    console.warn(warning)
+
+                                    batchArray[batchIndex].set(docRef, {
+                                        server_created_at: getTimestamp(),
+                                        server_updated_at: getTimestamp(),
+                                        server_deleted_at: getTimestamp(),
+                                        isDeleted: true,
+                                        sessionId,
+                                    });
                                 }
 
                                 operationCounter++;
@@ -249,9 +269,9 @@ export async function syncFireMelon(
 
 export const DOCUMENT_WAS_MODIFIED_ERROR = 'DOCUMENT WAS MODIFIED DURING PULL AND PUSH OPERATIONS';
 export const DOCUMENT_WAS_DELETED_ERROR = 'DOCUMENT WAS DELETED DURING PULL AND PUSH OPERATIONS';
-export const DOCUMENT_TRYING_TO_CREATE_ALREADY_EXISTS_ON_SERVER_ERROR = 'TYRING TO CREATE A DOCUMENT THAT ALREADY EXISTS ON THE SERVER'
-export const DOCUMENT_TRYING_TO_UPDATE_BUT_DOESNT_EXIST_ON_SERVER_ERROR = 'TYRING TO UPDATE A DOCUMENT BUT IT WAS NOT FOUND ON THE SERVER'
-export const DOCUMENT_TRYING_TO_DELETE_BUT_DOESNT_EXIST_ON_SERVER_ERROR = 'TYRING TO DELETE A DOCUMENT BUT IT WAS NOT FOUND ON THE SERVER'
+export const DOCUMENT_TRYING_TO_CREATE_ALREADY_EXISTS_ON_SERVER_ERROR = 'TYRING TO CREATE A DOCUMENT THAT ALREADY EXISTS ON THE SERVER - WILL OVERRIDE'
+export const DOCUMENT_TRYING_TO_UPDATE_BUT_DOESNT_EXIST_ON_SERVER_ERROR = 'TYRING TO UPDATE A DOCUMENT BUT IT WAS NOT FOUND ON THE SERVER - WILL CREATE'
+export const DOCUMENT_TRYING_TO_DELETE_BUT_DOESNT_EXIST_ON_SERVER_ERROR = 'TYRING TO DELETE A DOCUMENT BUT IT WAS NOT FOUND ON THE SERVER - WILL CREATE DELETION'
 
 const queryDocsInValue = (collection: CollectionRef, field: string, array: any[]) => {
     return new Promise((res) => {
