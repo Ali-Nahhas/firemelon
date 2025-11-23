@@ -4,6 +4,4 @@ coverage
 yarn.lock
 firebase-debug.log
 firestore-debug.log
-.firebaserc
-firebase.json
 .env.test
