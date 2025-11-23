@@ -14,7 +14,7 @@ function authedApp(auth: any) {
 describe('Pull Created', () => {
     afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
+        await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
     it('should pull created documents from Firestore to WatermelonDB', async () => {
@@ -55,7 +55,7 @@ describe('Pull Created', () => {
 describe('Pull Updated', () => {
     afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
+        await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
     it('should pull updated documents from Firestore to WatermelonDB', async () => {
@@ -106,7 +106,7 @@ describe('Pull Updated', () => {
 describe('Pull Deleted', () => {
     afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
+        await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
     it('should pull marked-as-deleted documents from Firestore to WatermelonDB and mark them as deleted', async () => {

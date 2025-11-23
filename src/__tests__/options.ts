@@ -14,7 +14,7 @@ function authedApp(auth: any) {
 describe('Options Excluded Fields', () => {
     afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
+        await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
     it('should exclude fields passes in options from being synced', async () => {
@@ -50,7 +50,7 @@ describe('Options Excluded Fields', () => {
 describe('Options Custom Query', () => {
     afterAll(async () => {
         await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map(app => app.delete()));
+        await Promise.all(firebase.apps().map((app) => app.delete()));
     });
 
     it('should sync performing the custom query passed in options', async () => {

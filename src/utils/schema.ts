@@ -22,16 +22,16 @@ export const schema = appSchema({
 export class Todo extends Model {
     static table = 'todos';
 
-    @(field as any)('text')
+    @((field as any)('text'))
     text!: string;
 
-    @(field as any)('color')
+    @((field as any)('color'))
     color!: string;
 }
 export class User extends Model {
     static table = 'users';
 
-    @(field as any)('name')
+    @((field as any)('name'))
     name!: string;
 }
 
@@ -42,7 +42,6 @@ export default function newDatabase() {
     const database = new Database({
         actionsEnabled: true,
         adapter,
-        // @ts-ignore
         modelClasses: [Todo, User],
     });
 

@@ -30,6 +30,14 @@ export interface CollectionRef extends Query {
 
 export type WhereFilterOp = '<' | '<=' | '==' | '>=' | '>' | 'array-contains';
 
+export interface Transaction {
+    delete(documentRef: any): Transaction;
+    get(documentRef: any): Promise<DocumentSnapshot>;
+    set(documentRef: any, data: { [key: string]: any }): Transaction;
+    update(documentRef: any, data: { [key: string]: any }): Transaction;
+}
+
 export interface FirestoreModule {
     collection: (collectionPath: string) => CollectionRef;
+    runTransaction(updateFunction: (transaction: Transaction) => Promise<any>): Promise<any>;
 }
