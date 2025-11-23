@@ -38,9 +38,11 @@ export class User extends Model {
 export default function newDatabase() {
     const adapter = new LokiJSAdapter({
         schema,
+        useWebWorker: false,
+        useIncrementalIndexedDB: true,
     });
     const database = new Database({
-        actionsEnabled: true,
+        // actionsEnabled: true (actions are now always enabled)
         adapter,
         modelClasses: [Todo, User],
     });
