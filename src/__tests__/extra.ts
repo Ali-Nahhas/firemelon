@@ -1,25 +1,15 @@
-import * as firebase from '@firebase/testing';
 import { syncFireMelon } from '../firestoreSync';
 import { SyncObj } from '../types/interfaces';
 import newDatabase, { Todo } from '../utils/schema';
 import timeout from '../utils/timeout';
 import { Model } from '@nozbe/watermelondb';
+import { getAuthedFirestore } from './testUtils';
 
-const projectId = 'firemelon';
 const sessionId = 'asojfbaoufasoinfaso';
 
-function authedApp(auth: any) {
-    return firebase.initializeTestApp({ projectId, auth }).firestore();
-}
-
 describe('extra', () => {
-    afterAll(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map((app) => app.delete()));
-    });
-
     it('should not try to update created document', async () => {
-        const app1 = authedApp({ uid: 'owner' });
+        const app1 = await getAuthedFirestore({ uid: 'owner' });
 
         const firstDatabase = newDatabase();
         const secondDatabase = newDatabase();
@@ -33,14 +23,14 @@ describe('extra', () => {
 
         let created: Model;
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             created = await firstMelonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
         });
         await syncFireMelon(firstDatabase, obj, app1, sessionId, () => new Date());
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await created.update((todo: any) => {
                 todo.text = 'todo 2';
             });

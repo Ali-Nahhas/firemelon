@@ -1,24 +1,14 @@
-import * as firebase from '@firebase/testing';
 import { syncFireMelon } from '../index';
 import { SyncObj } from '../types/interfaces';
 import newDatabase, { Todo } from '../utils/schema';
 import timeout from '../utils/timeout';
+import { getAuthedFirestore } from './testUtils';
 
-const projectId = 'firemelon';
 const sessionId = 'asojfbaoufasoinfaso';
 
-function authedApp(auth: any) {
-    return firebase.initializeTestApp({ projectId, auth }).firestore();
-}
-
 describe('Options Excluded Fields', () => {
-    afterAll(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map((app) => app.delete()));
-    });
-
     it('should exclude fields passes in options from being synced', async () => {
-        const app1 = authedApp({ uid: 'owner' });
+        const app1 = await getAuthedFirestore({ uid: 'owner' });
 
         const firstDatabase = newDatabase();
         const firstMelonTodosRef = firstDatabase.collections.get('todos');
@@ -30,7 +20,7 @@ describe('Options Excluded Fields', () => {
             },
         };
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await firstMelonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
                 todo.color = 'red';
@@ -48,13 +38,8 @@ describe('Options Excluded Fields', () => {
 });
 
 describe('Options Custom Query', () => {
-    afterAll(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map((app) => app.delete()));
-    });
-
     it('should sync performing the custom query passed in options', async () => {
-        const app1 = authedApp({ uid: 'owner' });
+        const app1 = await getAuthedFirestore({ uid: 'owner' });
 
         const firstDatabase = newDatabase();
         const secondDatabase = newDatabase();
@@ -70,7 +55,7 @@ describe('Options Custom Query', () => {
             },
         };
 
-        await firstDatabase.action(async () => {
+        await firstDatabase.write(async () => {
             await firstMelonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
                 todo.color = 'red';

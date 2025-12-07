@@ -1,25 +1,16 @@
-import * as firebase from '@firebase/testing';
+import { initializeTestEnvironment, RulesTestEnvironment, TokenOptions } from '@firebase/rules-unit-testing';
 import { Model } from '@nozbe/watermelondb';
 import { syncFireMelon } from '../firestoreSync';
 import { SyncObj } from '../types/interfaces';
 import newDatabase, { Todo, User } from '../utils/schema';
 import timeout from '../utils/timeout';
+import { getAuthedFirestore } from './testUtils';
 
-const projectId = 'firemelon';
 const sessionId = 'asojfbaoufasoinfaso';
 
-function authedApp(auth: any) {
-    return firebase.initializeTestApp({ projectId, auth }).firestore();
-}
-
 describe('Push Created', () => {
-    afterAll(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map((app) => app.delete()));
-    });
-
     it('should push documents to firestore when adding new objects in watermelonDB', async () => {
-        const app1 = authedApp({ uid: 'owner' });
+        const app1 = await getAuthedFirestore({ uid: 'owner', tokenOptions: { admin: true } });
 
         const db = newDatabase();
         const melonTodosRef = db.collections.get<Todo>('todos');
@@ -27,12 +18,12 @@ describe('Push Created', () => {
         const melonUsersRef = db.collections.get<User>('users');
         const fireUsersRef = app1.collection('users');
 
-        await db.action(async () => {
+        await db.write(async () => {
             await melonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
             await melonUsersRef.create((user: any) => {
-                user.text = 'some user name';
+                user.name = 'some user name';
             });
         });
 
@@ -64,13 +55,8 @@ describe('Push Created', () => {
 });
 
 describe('Push Updated', () => {
-    afterAll(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map((app) => app.delete()));
-    });
-
     it('should update documents in firestore when updating objects in watermelonDB', async () => {
-        const app1 = authedApp({ uid: 'owner' });
+        const app1 = await getAuthedFirestore({ uid: 'owner', tokenOptions: { admin: true } });
 
         const db = newDatabase();
         const melonTodosRef = db.collections.get<Todo>('todos');
@@ -82,7 +68,7 @@ describe('Push Updated', () => {
 
         let updated: Model;
 
-        await db.action(async () => {
+        await db.write(async () => {
             await melonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -96,7 +82,7 @@ describe('Push Updated', () => {
 
         await timeout(500);
 
-        await db.action(async () => {
+        await db.write(async () => {
             await updated.update((todo: any) => {
                 todo.text = 'updated todo';
             });
@@ -117,13 +103,8 @@ describe('Push Updated', () => {
 });
 
 describe('Push Deleted', () => {
-    afterAll(async () => {
-        await firebase.clearFirestoreData({ projectId });
-        await Promise.all(firebase.apps().map((app) => app.delete()));
-    });
-
     it('should mark documents in firestore as Deleted when marking objects as deleted in watermelonDB', async () => {
-        const app1 = authedApp({ uid: 'owner' });
+        const app1 = await getAuthedFirestore({ uid: 'owner', tokenOptions: { admin: true } });
 
         const db = newDatabase();
         const melonTodosRef = db.collections.get<Todo>('todos');
@@ -135,7 +116,7 @@ describe('Push Deleted', () => {
 
         let deleted: Model;
 
-        await db.action(async () => {
+        await db.write(async () => {
             await melonTodosRef.create((todo: any) => {
                 todo.text = 'todo 1';
             });
@@ -149,7 +130,7 @@ describe('Push Deleted', () => {
 
         await timeout(500);
 
-        await db.action(async () => {
+        await db.write(async () => {
             await deleted.markAsDeleted();
         });
 
