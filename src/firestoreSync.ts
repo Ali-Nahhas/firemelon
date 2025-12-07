@@ -96,7 +96,7 @@ export async function syncFireMelon(
                                     map(arrayOfChanged, async (doc) => {
                                         const itemValue = isDelete ? null : (doc.valueOf() as Item);
                                         const docRef = isDelete
-                                            ? collectionRef.doc(doc.toString())
+                                            ? collectionRef.doc((doc as string).toString())
                                             : collectionRef.doc(itemValue!.id);
 
                                         const ommited = [

@@ -7,17 +7,35 @@ jobs:
         timeout-minutes: 15
 
         runs-on: ubuntu-latest
+        env:
+            FIREMELON_PROJECT_ID: firemelon-testing
+            FIREMELON_EMULATOR_HOST: localhost
+            FIREMELON_EMULATOR_PORT: 9080
 
         strategy:
             matrix:
-                node-version: [10.x, 12.x]
+                node-version: [22.x]
 
         steps:
-            - uses: actions/checkout@v1
+            - uses: actions/checkout@v4
+
             - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v4
               with:
                   node-version: ${{ matrix.node-version }}
+
+            - name: Setup Java
+              uses: actions/setup-java@v4
+              with:
+                  distribution: "temurin"
+                  java-version: "21"
+
+            - name: Create .env.test file
+              run: |
+                  touch .env.test
+                  echo "FIREMELON_PROJECT_ID=$FIREMELON_PROJECT_ID" >> .env.test
+                  echo "FIREMELON_EMULATOR_HOST=$FIREMELON_EMULATOR_HOST" >> .env.test
+                  echo "FIREMELON_EMULATOR_PORT=$FIREMELON_EMULATOR_PORT" >> .env.test
 
             - run: npm install -g yarn
             - name: yarn install, build, and test
